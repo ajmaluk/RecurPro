@@ -562,6 +562,17 @@
     </a>
 
     <div class="header-actions">
+      <div style="display:flex; background:rgba(30,41,59,0.8); border:1px solid #1e293b; border-radius:8px; padding:3px; gap:4px;">
+        <button class="btn btn-secondary" id="modeVideoBtn" onclick="switchMode('video')" style="font-size:12px; padding:6px 12px; background:var(--brand); color:#070b14; font-weight:700;">
+          🎬 1080p Recorded Video
+        </button>
+        <button class="btn btn-secondary" id="modeStudioBtn" onclick="switchMode('studio')" style="font-size:12px; padding:6px 12px; background:transparent; color:#94a3b8;">
+          🖥️ Interactive Studio
+        </button>
+      </div>
+      <a href="/brightloop_presentation.webm" download="brightloop_presentation.webm" class="btn btn-secondary" style="font-size:12px; padding:6px 12px;" title="Download Video File">
+        📥 Download Video
+      </a>
       <button class="btn btn-secondary" id="voiceToggleBtn" onclick="toggleVoice()">
         <span id="voiceIcon">🔊</span> <span id="voiceLabel">Voiceover: ON</span>
       </button>
@@ -579,8 +590,26 @@
       <div class="screen-canvas">
         <div class="screen-glow"></div>
 
-        <!-- Slide Frame -->
-        <div class="slide-wrapper" id="slideFrame">
+        <!-- Video Player View (Default) -->
+        <div id="videoPlayerWrapper" style="width: 100%; max-width: 960px; position: relative; z-index: 20;">
+          <div style="background: #0f172a; border-radius: 12px 12px 0 0; border: 1px solid var(--card-border); border-bottom: none; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;">
+            <div class="window-dots">
+              <div class="dot dot-red"></div>
+              <div class="dot dot-yellow"></div>
+              <div class="dot dot-green"></div>
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--teal); font-weight: 600;">
+              brightloop_presentation.webm (1080p Full HD • Synchronized Audio)
+            </div>
+            <div style="font-size: 11px; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 9999px; font-weight: 700;">
+              HD RECORDING
+            </div>
+          </div>
+          <video id="mainWalkthroughVideo" src="/brightloop_presentation.webm" controls autoplay playsinline loop style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 0 0 12px 12px; border: 1px solid var(--card-border); border-top: none; box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(14,165,233,0.25); display: block;"></video>
+        </div>
+
+        <!-- Interactive Slide Frame (Alternate Mode) -->
+        <div class="slide-wrapper" id="slideFrame" style="display: none;">
           <div class="slide-header">
             <div class="window-dots">
               <div class="dot dot-red"></div>
@@ -600,7 +629,7 @@
       <!-- Real-time Voiceover Captions -->
       <div class="captions-bar">
         <div class="voice-indicator" id="voiceIndicator"></div>
-        <div class="caption-text" id="captionText">Initializing Brightloop video presentation with automated voiceover...</div>
+        <div class="caption-text" id="captionText">Brightloop Enterprise Recurring Billing Platform — Full Video Tour (04:30) with Live Narration</div>
       </div>
 
       <!-- Video Timeline & Controls -->
@@ -1108,20 +1137,80 @@
       }
     }
 
+    let currentMode = "video";
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const videoWrapper = document.getElementById("videoPlayerWrapper");
+      const slideFrame = document.getElementById("slideFrame");
+      const videoBtn = document.getElementById("modeVideoBtn");
+      const studioBtn = document.getElementById("modeStudioBtn");
+      const videoEl = document.getElementById("mainWalkthroughVideo");
+
+      if (mode === "video") {
+        videoWrapper.style.display = "block";
+        slideFrame.style.display = "none";
+        videoBtn.style.background = "var(--brand)";
+        videoBtn.style.color = "#070b14";
+        videoBtn.style.fontWeight = "700";
+        studioBtn.style.background = "transparent";
+        studioBtn.style.color = "#94a3b8";
+        studioBtn.style.fontWeight = "500";
+        if (synth) synth.cancel();
+        if (videoEl && videoEl.paused) videoEl.play().catch(() => {});
+        updateCaptions("Playing Recorded 1080p Video Walkthrough with synchronized audio narration.");
+      } else {
+        videoWrapper.style.display = "none";
+        slideFrame.style.display = "block";
+        studioBtn.style.background = "var(--teal)";
+        studioBtn.style.color = "#070b14";
+        studioBtn.style.fontWeight = "700";
+        videoBtn.style.background = "transparent";
+        videoBtn.style.color = "#94a3b8";
+        videoBtn.style.fontWeight = "500";
+        if (videoEl) videoEl.pause();
+        renderSlide(currentChapterIndex);
+        updateCaptions(`Chapter ${currentChapterIndex + 1}: ${CHAPTERS[currentChapterIndex].title}`);
+      }
+    }
+
     function jumpToChapter(index) {
       currentChapterIndex = index;
       playChime();
-      renderSlide(currentChapterIndex);
-      if (!isPlaying) {
-        togglePlay();
+
+      const videoEl = document.getElementById("mainWalkthroughVideo");
+      if (currentMode === "video" && videoEl) {
+        // Each recorded chapter is 4.5 seconds
+        videoEl.currentTime = index * 4.5;
+        videoEl.play().catch(() => {});
+        updateCaptions(`Chapter ${index + 1} of 9: ${CHAPTERS[index].title} — ${CHAPTERS[index].voiceScript}`);
+      } else {
+        renderSlide(currentChapterIndex);
+        if (!isPlaying) {
+          togglePlay();
+        }
       }
+
+      // Update active highlight on playlist
+      const items = document.querySelectorAll(".chapter-item");
+      items.forEach((item, i) => {
+        if (i === index) item.classList.add("active");
+        else item.classList.remove("active");
+      });
     }
 
     function restartPresentation() {
       currentChapterIndex = 0;
       elapsedSeconds = 0;
-      if (!isPlaying) togglePlay();
-      else renderSlide(0);
+      const videoEl = document.getElementById("mainWalkthroughVideo");
+      if (currentMode === "video" && videoEl) {
+        videoEl.currentTime = 0;
+        videoEl.play().catch(() => {});
+      } else {
+        if (!isPlaying) togglePlay();
+        else renderSlide(0);
+      }
+      jumpToChapter(0);
     }
 
     function toggleVoice() {

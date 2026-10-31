@@ -7,6 +7,9 @@ import { apiRouter } from "./api";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
+import fs from "fs";
+import path from "path";
+
 dotenv.config();
 
 const app = express();
@@ -22,6 +25,19 @@ app.get("/api/health", (_req, res) => {
     database: isUsingMySQL() ? "MySQL" : "In-Memory (MySQL Fallback)",
     timestamp: new Date().toISOString(),
   });
+});
+
+// Endpoint to persist generated video recordings directly to public/
+app.post("/api/save-video", express.raw({ type: "*/*", limit: "250mb" }), (req, res) => {
+  try {
+    const videoPath = path.resolve(process.cwd(), "public", "brightloop_presentation.webm");
+    fs.writeFileSync(videoPath, req.body);
+    console.log(`[Video] Walkthrough video saved successfully: ${videoPath} (${(req.body.length / 1024 / 1024).toFixed(2)} MB)`);
+    res.json({ success: true, url: "/brightloop_presentation.webm", size: req.body.length });
+  } catch (err: any) {
+    console.error("[Video] Failed to save video:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 import { convexBridgeRouter } from "./convex-bridge";
