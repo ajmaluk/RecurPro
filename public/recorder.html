@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Brightloop Video Engine & Automated Recorder</title>
+  <title>Brightloop Real-Screen Walkthrough Video Recorder</title>
   <style>
     body {
       margin: 0;
@@ -39,8 +39,8 @@
   </style>
 </head>
 <body>
-  <div id="status">INITIALIZING RECORDER...</div>
-  <div id="progress">Preparing scenes and audio stream...</div>
+  <div id="status">LOADING SCREEN ASSETS...</div>
+  <div id="progress">Preloading actual application screenshots...</div>
   <canvas id="recCanvas" width="1920" height="1080"></canvas>
 
   <script>
@@ -49,12 +49,11 @@
     const statusEl = document.getElementById("status");
     const progressEl = document.getElementById("progress");
 
-    // Audio Context Setup
+    // Audio setup
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioCtx();
     const audioDest = audioCtx.createMediaStreamDestination();
 
-    // Sound generation helpers
     function playTone(freq, duration, type = "sine", gainVal = 0.1) {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
@@ -75,35 +74,50 @@
       playTone(baseFreq * 1.5, 1.2, "sine", 0.06);
     }
 
-    function playTypeSound() {
-      playTone(400 + Math.random() * 300, 0.04, "triangle", 0.03);
+    function playClick() {
+      playTone(600, 0.05, "triangle", 0.05);
     }
 
     function playSuccessChime() {
-      playTone(523.25, 0.3, "sine", 0.1); // C5
-      setTimeout(() => playTone(659.25, 0.3, "sine", 0.1), 100); // E5
-      setTimeout(() => playTone(783.99, 0.5, "sine", 0.12), 200); // G5
-      setTimeout(() => playTone(1046.50, 0.8, "sine", 0.15), 300); // C6
+      playTone(523.25, 0.3, "sine", 0.1);
+      setTimeout(() => playTone(659.25, 0.3, "sine", 0.1), 100);
+      setTimeout(() => playTone(783.99, 0.5, "sine", 0.12), 200);
+      setTimeout(() => playTone(1046.50, 0.8, "sine", 0.15), 300);
     }
 
-    // Colors
-    const C = {
-      bg: "#070b14",
-      card: "#0f172a",
-      cardBorder: "#1e293b",
-      cardBorderGlow: "#0ea5e9",
-      brand: "#0ea5e9",
-      brandDark: "#0369a1",
-      teal: "#14b8a6",
-      green: "#10b981",
-      amber: "#f59e0b",
-      purple: "#8b5cf6",
-      text: "#f8fafc",
-      textMuted: "#94a3b8",
-      textDim: "#64748b"
+    // Preload actual UI screenshots
+    const SHOT_PATHS = {
+      landing: "/shots/01_landing.png",
+      login: "/shots/02_admin_login.png",
+      dashboard: "/shots/03_dashboard.png",
+      billing: "/shots/04_billing_runs.png",
+      invoices: "/shots/05_invoices.png",
+      share: "/shots/06_invoice_share.png",
+      subs: "/shots/07_subscriptions.png",
+      staff: "/shots/08_staff_customers.png",
+      portal: "/shots/09_customer_portal.png",
+      taxInvoice: "/shots/10_tax_invoice_public.png"
     };
 
-    // Helper: Rounded Rectangle
+    const images = {};
+
+    async function preloadImages() {
+      const keys = Object.keys(SHOT_PATHS);
+      for (const k of keys) {
+        const img = new Image();
+        img.src = SHOT_PATHS[k];
+        await new Promise((res, rej) => {
+          img.onload = res;
+          img.onerror = () => {
+            console.warn("Failed loading " + SHOT_PATHS[k]);
+            res();
+          };
+        });
+        images[k] = img;
+      }
+    }
+
+    // Drawing Helpers
     function roundRect(ctx, x, y, w, h, r, fill, stroke) {
       ctx.beginPath();
       ctx.moveTo(x + r, y);
@@ -112,445 +126,230 @@
       ctx.arcTo(x, y + h, x, y, r);
       ctx.arcTo(x, y, x + w, y, r);
       ctx.closePath();
-      if (fill) {
-        ctx.fillStyle = fill;
-        ctx.fill();
-      }
-      if (stroke) {
-        ctx.strokeStyle = stroke;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); }
     }
 
-    // Helper: Top Header
+    function drawScreenFrame(img, crop, targetRect, zoom = 1, panX = 0, panY = 0) {
+      const { x, y, w, h } = targetRect;
+      
+      // Outer drop shadow & frame container
+      roundRect(ctx, x - 10, y - 40, w + 20, h + 50, 16, "#0f172a", "#1e293b");
+
+      // Window bar
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(x - 10, y - 40, w + 20, 40);
+      
+      // Window dots
+      const dotColors = ["#ef4444", "#f59e0b", "#10b981"];
+      dotColors.forEach((c, i) => {
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.arc(x + 10 + i * 16, y - 20, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Address bar simulation
+      roundRect(ctx, x + 70, y - 32, w - 160, 24, 4, "#090d16", "#334155");
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "11px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("https://brightloop.io/app", x + 85, y - 16);
+
+      // Draw the actual running screenshot inside the clipping region
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.clip();
+
+      if (img && img.complete && img.naturalWidth > 0) {
+        const sw = img.naturalWidth / zoom;
+        const sh = img.naturalHeight / zoom;
+        const sx = Math.max(0, Math.min(img.naturalWidth - sw, panX));
+        const sy = Math.max(0, Math.min(img.naturalHeight - sh, panY));
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+      } else {
+        ctx.fillStyle = "#111827";
+        ctx.fillRect(x, y, w, h);
+      }
+      ctx.restore();
+    }
+
+    function drawCursor(x, y, clicking = false) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = clicking ? "#38bdf8" : "#ffffff";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 1.5;
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, 18);
+      ctx.lineTo(5, 14);
+      ctx.lineTo(10, 22);
+      ctx.lineTo(13, 20);
+      ctx.lineTo(8, 12);
+      ctx.lineTo(14, 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      if (clicking) {
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.7)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function drawHeader(chapterNum, title) {
-      // Glow background bar
-      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-      ctx.fillRect(0, 0, 1920, 90);
+      ctx.fillStyle = "rgba(15, 23, 42, 0.95)";
+      ctx.fillRect(0, 0, 1920, 85);
       ctx.strokeStyle = "#1e293b";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(0, 90);
-      ctx.lineTo(1920, 90);
+      ctx.moveTo(0, 85);
+      ctx.lineTo(1920, 85);
       ctx.stroke();
 
-      // Logo Icon & Title
-      ctx.fillStyle = C.teal;
+      // Brand Logo
+      ctx.fillStyle = "#14b8a6";
       ctx.beginPath();
-      ctx.arc(60, 45, 16, 0, Math.PI * 2);
+      ctx.arc(55, 42, 14, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = C.brand;
-      ctx.beginPath();
-      ctx.arc(60, 45, 9, 0, Math.PI * 2);
       ctx.fillStyle = "#070b14";
-      ctx.fill();
-
-      ctx.fillStyle = C.text;
-      ctx.font = "bold 26px sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText("Brightloop", 90, 53);
-
-      // Chapter Badge
-      roundRect(ctx, 235, 28, 140, 34, 6, "rgba(14, 165, 233, 0.15)", C.brand);
-      ctx.fillStyle = C.brand;
-      ctx.font = "bold 13px sans-serif";
-      ctx.fillText(`CHAPTER 0${chapterNum} / 09`, 248, 50);
-
-      // Active Title
-      ctx.fillStyle = C.textMuted;
-      ctx.font = "500 20px sans-serif";
-      ctx.fillText(`—  ${title}`, 395, 52);
-
-      // Status indicator
-      roundRect(ctx, 1690, 28, 170, 34, 17, "rgba(16, 185, 129, 0.12)", C.green);
-      ctx.fillStyle = C.green;
       ctx.beginPath();
-      ctx.arc(1712, 45, 5, 0, Math.PI * 2);
+      ctx.arc(55, 42, 7, 0, Math.PI * 2);
       ctx.fill();
-      ctx.font = "bold 13px sans-serif";
-      ctx.fillText("LIVE SYSTEM 2026", 1728, 50);
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "bold 24px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("Brightloop", 80, 50);
+
+      // Chapter badge
+      roundRect(ctx, 225, 26, 135, 32, 6, "rgba(14, 165, 233, 0.15)", "#0ea5e9");
+      ctx.fillStyle = "#0ea5e9";
+      ctx.font = "bold 12px sans-serif";
+      ctx.fillText(`SCENE 0${chapterNum} / 09`, 240, 47);
+
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "500 18px sans-serif";
+      ctx.fillText(`—  ${title}`, 380, 48);
+
+      roundRect(ctx, 1680, 26, 180, 32, 16, "rgba(16, 185, 129, 0.12)", "#10b981");
+      ctx.fillStyle = "#10b981";
+      ctx.beginPath();
+      ctx.arc(1700, 42, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = "bold 12px sans-serif";
+      ctx.fillText("LIVE APP RECORDING", 1715, 47);
     }
 
-    // Helper: Bottom Narration Bar
+    function drawCallout(x, y, title, desc, col = "#0ea5e9") {
+      roundRect(ctx, x, y, 380, 100, 10, "rgba(15, 23, 42, 0.95)", col);
+      roundRect(ctx, x + 15, y + 15, 6, 70, 3, col, null);
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "bold 16px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(title, x + 35, y + 38);
+
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "13px sans-serif";
+      ctx.fillText(desc, x + 35, y + 68);
+    }
+
     function drawNarration(scriptText, progressPct) {
-      // Bottom panel
-      roundRect(ctx, 80, 950, 1760, 85, 12, "rgba(15, 23, 42, 0.95)", "#1e293b");
+      roundRect(ctx, 80, 960, 1760, 80, 12, "rgba(15, 23, 42, 0.98)", "#1e293b");
 
-      // Progress bar within narration
+      // Progress bar
       ctx.fillStyle = "rgba(30, 41, 59, 0.8)";
-      ctx.fillRect(80, 1030, 1760, 5);
-      ctx.fillStyle = C.brand;
-      ctx.fillRect(80, 1030, 1760 * progressPct, 5);
+      ctx.fillRect(80, 1035, 1760, 5);
+      ctx.fillStyle = "#0ea5e9";
+      ctx.fillRect(80, 1035, 1760 * progressPct, 5);
 
-      // Voiceover tag
-      roundRect(ctx, 105, 968, 130, 26, 6, "rgba(14, 165, 233, 0.2)", C.brand);
-      ctx.fillStyle = C.brand;
+      roundRect(ctx, 105, 978, 130, 26, 6, "rgba(14, 165, 233, 0.2)", "#0ea5e9");
+      ctx.fillStyle = "#0ea5e9";
       ctx.font = "bold 11px sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText("🎙 VOICEOVER", 120, 985);
+      ctx.fillText("🎙 VOICEOVER", 120, 995);
 
-      // Script Text
       ctx.fillStyle = "#ffffff";
-      ctx.font = "500 20px sans-serif";
-      ctx.fillText(scriptText, 255, 987);
+      ctx.font = "500 19px sans-serif";
+      ctx.fillText(scriptText, 255, 996);
     }
 
-    // SCENES DEFINITIONS
+    // 9 SCENES INTEGRATING ACTUAL APPLICATION SCREEN RECORDINGS
     const SCENES = [
       {
         id: 1,
-        title: "Introduction & Enterprise Architecture",
-        duration: 4.5, // seconds
-        voice: "Welcome to Brightloop, the high-performance enterprise recurring billing and subscription management platform.",
+        title: "Platform Overview & Landing Experience",
+        duration: 4.5,
+        voice: "Welcome to Brightloop, modern recurring billing built on React 19, Express, and a relational MySQL datastore.",
         draw(t, p) {
-          drawHeader(1, "Enterprise Architecture Overview");
+          drawHeader(1, "Landing Page & High-Volume Architecture");
+          
+          // Actual landing page screenshot with subtle zoom
+          const zoom = 1 + p * 0.08;
+          drawScreenFrame(images.landing, null, { x: 80, y: 120, w: 1350, h: 810 }, zoom, p * 80, p * 40);
 
-          // Glow Background
-          const grad = ctx.createRadialGradient(960, 500, 50, 960, 500, 700);
-          grad.addColorStop(0, "rgba(14, 165, 233, 0.18)");
-          grad.addColorStop(1, "rgba(7, 11, 20, 0)");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 90, 1920, 860);
+          // Real-time callout badges
+          drawCallout(1460, 150, "Full-Stack Core Stack", "React 19 + TypeScript + Express + MySQL 8.0.", "#0ea5e9");
+          drawCallout(1460, 280, "Zero-Downtime Fallback", "Operating with memory persistence fallback.", "#14b8a6");
+          drawCallout(1460, 410, "GST 18% Compliant", "Automatic CGST & SGST calculations.", "#10b981");
+          drawCallout(1460, 540, "Integrated Walkthrough", "Direct access to presentation & live demo.", "#8b5cf6");
 
-          // Center Title Box
-          ctx.textAlign = "center";
-          ctx.fillStyle = C.brand;
-          ctx.font = "bold 18px sans-serif";
-          ctx.fillText("RECURRING BILLING & SUBSCRIPTION PLATFORM", 960, 220);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "800 64px sans-serif";
-          ctx.fillText("Brightloop Cloud Suite", 960, 295);
-
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "400 24px sans-serif";
-          ctx.fillText("Enterprise billing runs, tax invoicing (print & share), dunning cycles, and customer self-service.", 960, 345);
-
-          // 4 Core Architecture Pillars
-          const pillars = [
-            { icon: "⚡", title: "Full-Stack Core", desc: "React 19 + Express API + TypeScript + Tailwind CSS" },
-            { icon: "🗄️", title: "MySQL 8.0 Datastore", desc: "Relational tables with zero-downtime memory fallback" },
-            { icon: "🧾", title: "GST Tax Invoicing", desc: "Official A4 PDF printing + WhatsApp & Email direct sharing" },
-            { icon: "🛡️", title: "Role-Based Access", desc: "Admin Back Office, Operations Staff & Customer Portal" }
-          ];
-
-          const startX = 200;
-          const boxW = 350;
-          const gap = 40;
-          pillars.forEach((pil, idx) => {
-            const bx = startX + idx * (boxW + gap);
-            const by = 430 + Math.sin(t * 3 + idx) * 5;
-            roundRect(ctx, bx, by, boxW, 260, 16, C.card, idx === 1 ? C.brand : C.cardBorder);
-
-            // Icon
-            ctx.fillStyle = "rgba(14, 165, 233, 0.15)";
-            ctx.beginPath();
-            ctx.arc(bx + 60, by + 65, 30, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.font = "28px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(pil.icon, bx + 60, by + 75);
-
-            // Title & Desc
-            ctx.textAlign = "left";
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 22px sans-serif";
-            ctx.fillText(pil.title, bx + 30, by + 140);
-
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "400 16px sans-serif";
-            const words = pil.desc.split(" ");
-            let line1 = words.slice(0, 3).join(" ");
-            let line2 = words.slice(3).join(" ");
-            ctx.fillText(line1, bx + 30, by + 180);
-            ctx.fillText(line2, bx + 30, by + 208);
-          });
+          // Animated mouse cursor scrolling to CTA
+          const curX = 500 + p * 300;
+          const curY = 400 + Math.sin(p * 5) * 50;
+          drawCursor(curX, curY);
 
           drawNarration(this.voice, p);
         }
       },
       {
         id: 2,
-        title: "Role-Based Authentication & Portals",
+        title: "Admin & Staff Back Office Login",
         duration: 4.5,
-        voice: "Brightloop provides isolated portals: Administrative back office for operators, and self-service for subscribers.",
+        voice: "Administrators log in at admin/login using admin@brightloop.io, with dedicated role authentication.",
         draw(t, p) {
-          drawHeader(2, "Multi-Role Authentication & Access Control");
+          drawHeader(2, "Secure Role-Based Back Office Authentication");
 
-          // Two Main Login Card Mockups
-          const leftX = 220;
-          const rightX = 1040;
-          const cardW = 660;
-          const cardH = 540;
-          const cardY = 220;
+          drawScreenFrame(images.login, null, { x: 80, y: 120, w: 1350, h: 810 }, 1.05, 100, 80);
 
-          // Left: Admin Back Office
-          roundRect(ctx, leftX, cardY, cardW, cardH, 16, C.card, C.brand);
-          // Header
-          roundRect(ctx, leftX + 30, cardY + 30, 170, 30, 6, "rgba(14, 165, 233, 0.15)", C.brand);
-          ctx.fillStyle = C.brand;
-          ctx.font = "bold 13px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("ADMIN & STAFF PORTAL", leftX + 45, cardY + 50);
+          drawCallout(1460, 180, "Role-Based Access Control", "Admin, Staff, and Customer isolated portals.", "#0ea5e9");
+          drawCallout(1460, 320, "Demo Credentials Included", "admin@brightloop.io / Password123!", "#10b981");
+          drawCallout(1460, 460, "JWT Secure Sessions", "Stored under brightloop_token with auto-refresh.", "#f59e0b");
 
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 28px sans-serif";
-          ctx.fillText("Back Office Sign In", leftX + 30, cardY + 110);
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "16px sans-serif";
-          ctx.fillText("Full administrative governance over billing runs, customers & catalog.", leftX + 30, cardY + 145);
-
-          // Simulated input fields
-          // Email
-          roundRect(ctx, leftX + 30, cardY + 180, cardW - 60, 60, 8, "#090d16", "#334155");
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "14px sans-serif";
-          ctx.fillText("Email Address", leftX + 50, cardY + 205);
-          // Animated typed text
-          const adminEmail = "admin@brightloop.io";
-          const charsToShow = Math.min(adminEmail.length, Math.floor(p * 2 * adminEmail.length));
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 18px monospace";
-          ctx.fillText(adminEmail.substring(0, charsToShow) + (p < 0.6 ? "|" : ""), leftX + 50, cardY + 228);
-
-          // Password
-          roundRect(ctx, leftX + 30, cardY + 260, cardW - 60, 60, 8, "#090d16", "#334155");
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "14px sans-serif";
-          ctx.fillText("Password", leftX + 50, cardY + 285);
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 22px sans-serif";
-          ctx.fillText("••••••••••••", leftX + 50, cardY + 308);
-
-          // Sign In Button
-          roundRect(ctx, leftX + 30, cardY + 345, cardW - 60, 56, 8, C.brand, null);
-          ctx.fillStyle = "#070b14";
-          ctx.font = "bold 18px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText("Sign In to Back Office →", leftX + cardW / 2, cardY + 380);
-
-          // Helper pills
-          ctx.textAlign = "left";
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "13px sans-serif";
-          ctx.fillText("Quick Demo Accounts:", leftX + 30, cardY + 440);
-          roundRect(ctx, leftX + 30, cardY + 460, 280, 40, 6, "rgba(30, 41, 59, 0.7)", "#334155");
-          ctx.fillStyle = C.text;
-          ctx.font = "13px monospace";
-          ctx.fillText("admin@brightloop.io (Admin)", leftX + 45, cardY + 485);
-
-          roundRect(ctx, leftX + 330, cardY + 460, 270, 40, 6, "rgba(30, 41, 59, 0.7)", "#334155");
-          ctx.fillText("staff@brightloop.io (Staff)", leftX + 345, cardY + 485);
-
-          // Right: Customer Self-Service Portal
-          roundRect(ctx, rightX, cardY, cardW, cardH, 16, C.card, C.teal);
-          roundRect(ctx, rightX + 30, cardY + 30, 185, 30, 6, "rgba(20, 184, 166, 0.15)", C.teal);
-          ctx.fillStyle = C.teal;
-          ctx.font = "bold 13px sans-serif";
-          ctx.fillText("CUSTOMER SELF-SERVICE", rightX + 45, cardY + 50);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 28px sans-serif";
-          ctx.fillText("Subscriber Portal", rightX + 30, cardY + 110);
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "16px sans-serif";
-          ctx.fillText("Self-service access to active subscriptions, statements, and tax invoices.", rightX + 30, cardY + 145);
-
-          roundRect(ctx, rightX + 30, cardY + 180, cardW - 60, 60, 8, "#090d16", "#334155");
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "14px sans-serif";
-          ctx.fillText("Customer Email", rightX + 50, cardY + 205);
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 18px monospace";
-          ctx.fillText("arjun@apexlogistics.in", rightX + 50, cardY + 228);
-
-          roundRect(ctx, rightX + 30, cardY + 260, cardW - 60, 60, 8, "#090d16", "#334155");
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "14px sans-serif";
-          ctx.fillText("Password", rightX + 50, cardY + 285);
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 22px sans-serif";
-          ctx.fillText("••••••••••••", rightX + 50, cardY + 308);
-
-          roundRect(ctx, rightX + 30, cardY + 345, cardW - 60, 56, 8, C.teal, null);
-          ctx.fillStyle = "#070b14";
-          ctx.font = "bold 18px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText("Enter Customer Portal →", rightX + cardW / 2, cardY + 380);
-
-          ctx.textAlign = "left";
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "13px sans-serif";
-          ctx.fillText("Sample Subscribers:", rightX + 30, cardY + 440);
-          roundRect(ctx, rightX + 30, cardY + 460, 275, 40, 6, "rgba(30, 41, 59, 0.7)", "#334155");
-          ctx.fillStyle = C.text;
-          ctx.font = "13px monospace";
-          ctx.fillText("arjun@apexlogistics.in", rightX + 45, cardY + 485);
-
-          roundRect(ctx, rightX + 325, cardY + 460, 275, 40, 6, "rgba(30, 41, 59, 0.7)", "#334155");
-          ctx.fillText("neha@zenithtech.in", rightX + 340, cardY + 485);
+          // Cursor clicking the Sign In button
+          const clickProgress = Math.min(1, Math.max(0, (p - 0.5) * 4));
+          const cx = 720;
+          const cy = 600;
+          drawCursor(cx, cy, clickProgress > 0 && clickProgress < 0.8);
 
           drawNarration(this.voice, p);
         }
       },
       {
         id: 3,
-        title: "Executive Financial Dashboard",
+        title: "Financial Operations Dashboard",
         duration: 4.5,
-        voice: "Upon login, the executive dashboard delivers real-time visibility into MRR, active subscribers, and cash flow.",
+        voice: "Upon login, the executive dashboard displays real-time MRR, active subscriber counts, and cash flow trends.",
         draw(t, p) {
-          drawHeader(3, "Back Office Financial Operations Dashboard");
+          drawHeader(3, "Real-Time Financial Dashboard & Metrics");
 
-          // 4 Metric KPI Cards
-          const kpis = [
-            { label: "MONTHLY RECURRING REVENUE", val: "₹18,45,000", change: "+14.8% MoM", color: C.brand },
-            { label: "ACTIVE SUBSCRIBERS", val: "312", change: "+24 this month", color: C.teal },
-            { label: "TOTAL INVOICED REVENUE", val: "₹42,80,000", change: "98.4% Paid rate", color: C.green },
-            { label: "DUE & RETRYING INVOICES", val: "₹1,24,000", change: "4 in Dunning", color: C.amber }
-          ];
+          drawScreenFrame(images.dashboard, null, { x: 80, y: 120, w: 1350, h: 810 }, 1.04, p * 40, 20);
 
-          const startX = 120;
-          const kpiW = 390;
-          const gap = 30;
-          kpis.forEach((k, idx) => {
-            const bx = startX + idx * (kpiW + gap);
-            roundRect(ctx, bx, 140, kpiW, 140, 12, C.card, C.cardBorder);
+          drawCallout(1460, 160, "Monthly Recurring Revenue", "Tracks MRR growth with integer paise precision.", "#0ea5e9");
+          drawCallout(1460, 300, "Active Subscribers", "Monitors total active plans & low churn rates.", "#10b981");
+          drawCallout(1460, 440, "Recent Invoices Feed", "Live status updates: Draft, Posted, and Paid.", "#14b8a6");
+          drawCallout(1460, 580, "Interactive Visualizations", "Custom CSS and SVG charts with zero lag.", "#8b5cf6");
 
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "bold 12px sans-serif";
-            ctx.textAlign = "left";
-            ctx.fillText(k.label, bx + 24, 175);
-
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 34px sans-serif";
-            ctx.fillText(k.val, bx + 24, 225);
-
-            roundRect(ctx, bx + 250, 200, 115, 26, 13, "rgba(16, 185, 129, 0.15)", k.color);
-            ctx.fillStyle = k.color;
-            ctx.font = "bold 11px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(k.change, bx + 307, 217);
-          });
-
-          // Main Chart Card (Left)
-          const chartW = 1040;
-          const chartH = 480;
-          roundRect(ctx, 120, 310, chartW, chartH, 12, C.card, C.cardBorder);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 20px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Revenue & Invoicing Trajectory (2026)", 150, 355);
-
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "14px sans-serif";
-          ctx.fillText("Calculated with integer-paise financial precision.", 150, 385);
-
-          // Draw animated area chart
-          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"];
-          const values = [12, 14.5, 13.8, 16.2, 18.0, 21.5, 23.0, 26.4, 31.0, 38.5];
-          const chartOriginX = 180;
-          const chartOriginY = 720;
-          const chartPlotW = 920;
-          const chartPlotH = 270;
-
-          // Grid lines
-          ctx.strokeStyle = "#1e293b";
-          ctx.lineWidth = 1;
-          for (let i = 0; i <= 4; i++) {
-            const gy = chartOriginY - (chartPlotH / 4) * i;
-            ctx.beginPath();
-            ctx.moveTo(chartOriginX, gy);
-            ctx.lineTo(chartOriginX + chartPlotW, gy);
-            ctx.stroke();
-
-            ctx.fillStyle = C.textDim;
-            ctx.font = "12px sans-serif";
-            ctx.textAlign = "right";
-            ctx.fillText(`₹${i * 10}L`, chartOriginX - 15, gy + 4);
-          }
-
-          // Animated curve
-          ctx.beginPath();
-          const stepX = chartPlotW / (months.length - 1);
-          const maxVal = 40;
-          const currentPts = [];
-          for (let i = 0; i < months.length; i++) {
-            const px = chartOriginX + i * stepX;
-            const progressHeight = Math.min(1, p * 1.5);
-            const py = chartOriginY - (values[i] / maxVal) * chartPlotH * progressHeight;
-            currentPts.push({ x: px, y: py });
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
-          }
-          ctx.strokeStyle = C.brand;
-          ctx.lineWidth = 3.5;
-          ctx.stroke();
-
-          // Fill gradient under curve
-          ctx.lineTo(chartOriginX + chartPlotW, chartOriginY);
-          ctx.lineTo(chartOriginX, chartOriginY);
-          ctx.closePath();
-          const chartGrad = ctx.createLinearGradient(0, chartOriginY - chartPlotH, 0, chartOriginY);
-          chartGrad.addColorStop(0, "rgba(14, 165, 233, 0.3)");
-          chartGrad.addColorStop(1, "rgba(14, 165, 233, 0.0)");
-          ctx.fillStyle = chartGrad;
-          ctx.fill();
-
-          // Month labels
-          months.forEach((m, i) => {
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "12px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(m, chartOriginX + i * stepX, chartOriginY + 25);
-          });
-
-          // Recent Invoices Table (Right)
-          const tableX = 1190;
-          const tableW = 610;
-          roundRect(ctx, tableX, 310, tableW, chartH, 12, C.card, C.cardBorder);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 20px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Recent Invoices", tableX + 30, 355);
-
-          const sampleInvoices = [
-            { id: "INV-2026-001", cust: "Apex Logistics India", amount: "₹29,500", status: "PAID", stCol: C.green },
-            { id: "INV-2026-002", cust: "Zenith Tech Systems", amount: "₹59,000", status: "POSTED", stCol: C.brand },
-            { id: "INV-2026-003", cust: "BluePeak Solutions", amount: "₹14,750", status: "PAID", stCol: C.green },
-            { id: "INV-2026-004", cust: "Quantix Retailers", amount: "₹11,800", status: "DRAFT", stCol: C.amber },
-            { id: "INV-2026-005", cust: "HyperNova Labs", amount: "₹47,200", status: "PAID", stCol: C.green }
-          ];
-
-          sampleInvoices.forEach((inv, i) => {
-            const ry = 400 + i * 65;
-            ctx.fillStyle = i % 2 === 0 ? "rgba(30, 41, 59, 0.3)" : "transparent";
-            ctx.fillRect(tableX + 15, ry - 15, tableW - 30, 55);
-
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 15px monospace";
-            ctx.textAlign = "left";
-            ctx.fillText(inv.id, tableX + 30, ry + 18);
-
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "14px sans-serif";
-            ctx.fillText(inv.cust, tableX + 180, ry + 18);
-
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 15px sans-serif";
-            ctx.textAlign = "right";
-            ctx.fillText(inv.amount, tableX + 460, ry + 18);
-
-            roundRect(ctx, tableX + 480, ry + 2, 85, 24, 12, "rgba(30, 41, 59, 0.8)", inv.stCol);
-            ctx.fillStyle = inv.stCol;
-            ctx.font = "bold 11px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(inv.status, tableX + 522, ry + 18);
-          });
-
+          drawCursor(400 + p * 200, 350 + Math.cos(p * 4) * 30);
           drawNarration(this.voice, p);
         }
       },
@@ -560,655 +359,125 @@
         duration: 4.5,
         voice: "The deterministic billing engine automates invoicing without risk of duplicate runs, with automated dunning.",
         draw(t, p) {
-          drawHeader(4, "Deterministic Billing Engine & Dunning Schedules");
+          drawHeader(4, "Deterministic Billing Engine & Batch Invoicing");
 
-          // Left Box: Run Invoicing Action Mockup
-          const leftW = 760;
-          roundRect(ctx, 120, 180, leftW, 640, 16, C.card, C.brand);
+          drawScreenFrame(images.billing, null, { x: 80, y: 120, w: 1350, h: 810 }, 1.05, 50, 40);
 
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 28px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Scheduled & Manual Billing Runs", 160, 240);
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "16px sans-serif";
-          ctx.fillText("Deterministic period calculations prevent duplicate billings across subscription cycles.", 160, 275);
+          drawCallout(1460, 180, "Run Invoicing Now", "Single-click or scheduled cron batch runs.", "#0ea5e9");
+          drawCallout(1460, 320, "Deterministic Checks", "Zero risk of double charging across cycles.", "#10b981");
+          drawCallout(1460, 460, "7-Day Dunning Lifecycle", "Automatic retries on day 1, day 3, and day 7.", "#f59e0b");
 
-          // Simulated Run Button
-          const btnActive = p > 0.3;
-          roundRect(ctx, 160, 320, 320, 60, 8, btnActive ? C.green : C.brand, null);
-          ctx.fillStyle = "#070b14";
-          ctx.font = "bold 18px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText(btnActive ? "✓ BILLING RUN COMPLETED" : "▶ RUN INVOICING NOW", 320, 357);
-
-          // Animated Run Status Box
-          roundRect(ctx, 160, 410, leftW - 80, 160, 10, "#090d16", "#334155");
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "14px monospace";
-          ctx.textAlign = "left";
-          ctx.fillText("BILLING ENGINE EXECUTION LOG (JOB #RUN-2026-10-31)", 185, 445);
-
-          const runProgress = Math.min(1, p * 1.6);
-          // Progress bar
-          ctx.fillStyle = "#1e293b";
-          ctx.fillRect(185, 470, leftW - 130, 12);
-          ctx.fillStyle = C.green;
-          ctx.fillRect(185, 470, (leftW - 130) * runProgress, 12);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "14px monospace";
-          ctx.fillText(`• Subscriptions scanned: 312 / 312 active`, 185, 515);
-          ctx.fillText(`• Invoices generated: 42 invoices totaling ₹12,48,000`, 185, 540);
-
-          // Stats summary
-          roundRect(ctx, 160, 600, 210, 80, 8, "rgba(30, 41, 59, 0.5)", "#334155");
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "12px sans-serif";
-          ctx.fillText("EXECUTION TIME", 180, 625);
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 20px monospace";
-          ctx.fillText("240 ms", 180, 655);
-
-          roundRect(ctx, 390, 600, 210, 80, 8, "rgba(30, 41, 59, 0.5)", "#334155");
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "12px sans-serif";
-          ctx.fillText("DUPLICATES DETECTED", 410, 625);
-          ctx.fillStyle = C.green;
-          ctx.font = "bold 20px monospace";
-          ctx.fillText("0 (Deterministic)", 410, 655);
-
-          // Right Box: Dunning Protocol
-          const rightX = 920;
-          const rightW = 880;
-          roundRect(ctx, rightX, 180, rightW, 640, 16, C.card, C.amber);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 28px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Automated Dunning & Recovery Protocol", rightX + 40, 240);
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "16px sans-serif";
-          ctx.fillText("Intelligent retry schedule recovers 78% of failed subscription renewals.", rightX + 40, 275);
-
-          const dunningSteps = [
-            { day: "DAY 0", title: "Charge Attempt", desc: "Primary payment gateway triggers recurring deduction.", color: C.brand },
-            { day: "DAY 1", title: "Soft Reminder", desc: "Automated WhatsApp and Email alert with 1-click update link.", color: C.teal },
-            { day: "DAY 3", title: "Smart Retry #1", desc: "Secondary payment retry with fallback UPI / Card options.", color: C.amber },
-            { day: "DAY 7", title: "Grace Period & Freeze", desc: "Final escalation, auto-freeze service with zero data loss.", color: "#ef4444" }
-          ];
-
-          dunningSteps.forEach((st, idx) => {
-            const dy = 320 + idx * 115;
-            roundRect(ctx, rightX + 40, dy, rightW - 80, 95, 10, "rgba(15, 23, 42, 0.8)", "#334155");
-
-            roundRect(ctx, rightX + 60, dy + 25, 90, 40, 6, "rgba(30, 41, 59, 0.8)", st.color);
-            ctx.fillStyle = st.color;
-            ctx.font = "bold 15px monospace";
-            ctx.textAlign = "center";
-            ctx.fillText(st.day, rightX + 105, dy + 50);
-
-            ctx.textAlign = "left";
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 18px sans-serif";
-            ctx.fillText(st.title, rightX + 175, dy + 45);
-
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "14px sans-serif";
-            ctx.fillText(st.desc, rightX + 175, dy + 70);
-          });
+          // Cursor clicks "Run Invoicing Now"
+          const clicking = p > 0.4 && p < 0.7;
+          drawCursor(880, 280, clicking);
 
           drawNarration(this.voice, p);
         }
       },
       {
         id: 5,
-        title: "Subscription Lifecycle & State Machine",
+        title: "Invoices Management & State Machine",
         duration: 4.5,
-        voice: "Subscriptions transition cleanly across their lifecycle: draft, active, past-due, and cancelled.",
+        voice: "Invoices progress cleanly through a formal state machine: Draft, Posted, Paid, Overdue, or Cancelled.",
         draw(t, p) {
-          drawHeader(5, "Subscription Lifecycle & State Machine Transitions");
+          drawHeader(5, "Invoices Table & State Machine Verification");
 
-          // State Machine Diagram on Canvas
-          const states = [
-            { name: "Draft", x: 300, y: 350, col: C.textDim, desc: "Created via wizard" },
-            { name: "Active", x: 740, y: 350, col: C.green, desc: "Invoicing & active access" },
-            { name: "Past Due", x: 1180, y: 350, col: C.amber, desc: "Payment retrying in dunning" },
-            { name: "Cancelled", x: 1620, y: 350, col: "#ef4444", desc: "End of billing term" }
-          ];
+          drawScreenFrame(images.invoices, null, { x: 80, y: 120, w: 1350, h: 810 }, 1.03, 30, p * 60);
 
-          // Draw transition arrows between states
-          ctx.strokeStyle = "#334155";
-          ctx.lineWidth = 3;
-          for (let i = 0; i < states.length - 1; i++) {
-            ctx.beginPath();
-            ctx.moveTo(states[i].x + 90, states[i].y);
-            ctx.lineTo(states[i + 1].x - 90, states[i + 1].y);
-            ctx.stroke();
+          drawCallout(1460, 180, "Formal State Machine", "Draft ➔ Posted ➔ Paid / Overdue ➔ Cancelled.", "#0ea5e9");
+          drawCallout(1460, 320, "Single-Click Actions", "Print / PDF, Share, and Record Payment.", "#10b981");
+          drawCallout(1460, 460, "Integer Paise Math", "All amounts stored as paise to eliminate rounding errors.", "#14b8a6");
 
-            // Arrow head
-            ctx.fillStyle = C.brand;
-            ctx.beginPath();
-            ctx.arc(states[i + 1].x - 90, states[i + 1].y, 6, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          // Draw Nodes
-          states.forEach((s, idx) => {
-            const isTarget = idx === 1;
-            const r = isTarget ? 85 : 75;
-            const glow = isTarget ? "rgba(16, 185, 129, 0.25)" : "rgba(30, 41, 59, 0.5)";
-
-            ctx.fillStyle = glow;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, r + 15, 0, Math.PI * 2);
-            ctx.fill();
-
-            roundRect(ctx, s.x - 100, s.y - 60, 200, 120, 16, C.card, s.col);
-
-            ctx.fillStyle = s.col;
-            ctx.font = "bold 22px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(s.name, s.x, s.y - 10);
-
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "12px sans-serif";
-            ctx.fillText(s.desc, s.x, s.y + 25);
-          });
-
-          // Subscription Wizard Mockup Box Below
-          roundRect(ctx, 160, 520, 1600, 320, 16, C.card, C.cardBorder);
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 22px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Interactive Subscription Configuration Wizard", 200, 565);
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "15px sans-serif";
-          ctx.fillText("Step-by-step subscriber onboarding with customizable plans, billing frequency, and add-on pricing.", 200, 595);
-
-          // Steps
-          const wizardSteps = [
-            { step: "01", title: "Select Customer", sub: "Apex Logistics India" },
-            { step: "02", title: "Choose Plan Tier", sub: "Enterprise Cloud Suite" },
-            { step: "03", title: "Configure Add-ons", sub: "50,000 Extra API Calls" },
-            { step: "04", title: "Review & Activate", sub: "Monthly Cycle (₹29,500/mo)" }
-          ];
-
-          wizardSteps.forEach((ws, i) => {
-            const wx = 200 + i * 390;
-            roundRect(ctx, wx, 630, 360, 160, 10, "#090d16", i === 3 ? C.brand : "#334155");
-
-            roundRect(ctx, wx + 20, 650, 45, 30, 6, "rgba(14, 165, 233, 0.2)", C.brand);
-            ctx.fillStyle = C.brand;
-            ctx.font = "bold 14px monospace";
-            ctx.textAlign = "center";
-            ctx.fillText(ws.step, wx + 42, 670);
-
-            ctx.textAlign = "left";
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 17px sans-serif";
-            ctx.fillText(ws.title, wx + 80, 672);
-
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "14px sans-serif";
-            ctx.fillText(ws.sub, wx + 25, 720);
-          });
-
+          drawCursor(650, 450 + p * 80);
           drawNarration(this.voice, p);
         }
       },
       {
         id: 6,
-        title: "GST Tax Invoicing (Print PDF & Direct Share)",
+        title: "Tax Invoicing: Print PDF & Direct Share",
         duration: 4.5,
         voice: "Every invoice meets legal GST standards. You can print compliant A4 PDFs or share directly via WhatsApp and email.",
         draw(t, p) {
           drawHeader(6, "GST Tax Invoice (Print & Multi-Channel Sharing)");
 
-          // A4 Invoice Sheet Mockup
-          const sheetX = 200;
-          const sheetY = 140;
-          const sheetW = 760;
-          const sheetH = 740;
-          roundRect(ctx, sheetX, sheetY, sheetW, sheetH, 8, "#ffffff", "#e2e8f0");
+          // Show the actual Share Dialog or Public Tax Invoice screenshot
+          drawScreenFrame(images.share, null, { x: 80, y: 120, w: 1350, h: 810 }, 1.08, 120, 90);
 
-          // Invoice Header in A4
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "bold 26px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("TAX INVOICE", sheetX + 40, sheetY + 50);
+          drawCallout(1460, 160, "GST-Compliant A4 Print", "Formal tax invoice with CIN, GSTIN & HSN codes.", "#0ea5e9");
+          drawCallout(1460, 300, "WhatsApp Direct Share", "Pre-filled message with invoice summary & UPI.", "#10b981");
+          drawCallout(1460, 440, "Email Dispatch", "Direct email dispatch with payment instructions.", "#8b5cf6");
+          drawCallout(1460, 580, "Public Permalinks", "Shareable links: /invoice/public/INV-2026-001.", "#14b8a6");
 
-          ctx.fillStyle = "#64748b";
-          ctx.font = "12px sans-serif";
-          ctx.fillText("ORIGINAL FOR RECIPIENT — ISSUED UNDER SECTION 31 OF CGST ACT", sheetX + 40, sheetY + 75);
-
-          // Company details
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "bold 15px sans-serif";
-          ctx.fillText("Brightloop Technologies Pvt. Ltd.", sheetX + 40, sheetY + 115);
-          ctx.fillStyle = "#475569";
-          ctx.font = "12px sans-serif";
-          ctx.fillText("GSTIN: 29AABCU9603R1ZM | CIN: U72200KA2024PTC184201", sheetX + 40, sheetY + 135);
-          ctx.fillText("Email: billing@brightloop.io | UPI: brightloop@hdfcbank", sheetX + 40, sheetY + 155);
-
-          // Customer box
-          roundRect(ctx, sheetX + 40, sheetY + 180, sheetW - 80, 85, 4, "#f8fafc", "#e2e8f0");
-          ctx.fillStyle = "#64748b";
-          ctx.font = "bold 11px sans-serif";
-          ctx.fillText("BILLED TO:", sheetX + 55, sheetY + 205);
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "bold 14px sans-serif";
-          ctx.fillText("Apex Logistics India Pvt. Ltd. (GSTIN: 27AABCU1234D1Z5)", sheetX + 55, sheetY + 225);
-          ctx.fillStyle = "#475569";
-          ctx.font = "12px sans-serif";
-          ctx.fillText("Invoice: INV-2026-001  |  Date: 31-Oct-2026  |  Terms: Net 15", sheetX + 55, sheetY + 245);
-
-          // Invoice Table
-          const tableStartY = sheetY + 290;
-          ctx.fillStyle = "#0f172a";
-          ctx.fillRect(sheetX + 40, tableStartY, sheetW - 80, 30);
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 11px sans-serif";
-          ctx.fillText("DESCRIPTION", sheetX + 55, tableStartY + 20);
-          ctx.fillText("HSN / SAC", sheetX + 380, tableStartY + 20);
-          ctx.fillText("RATE", sheetX + 490, tableStartY + 20);
-          ctx.fillText("AMOUNT (INR)", sheetX + 580, tableStartY + 20);
-
-          // Rows
-          const rowY = tableStartY + 50;
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "13px sans-serif";
-          ctx.fillText("Brightloop Enterprise Cloud Suite", sheetX + 55, rowY);
-          ctx.fillText("998313", sheetX + 380, rowY);
-          ctx.fillText("₹25,000.00", sheetX + 490, rowY);
-          ctx.fillText("₹25,000.00", sheetX + 580, rowY);
-
-          // Subtotals
-          const totY = sheetY + 450;
-          ctx.strokeStyle = "#cbd5e1";
-          ctx.beginPath();
-          ctx.moveTo(sheetX + 400, totY);
-          ctx.lineTo(sheetX + sheetW - 40, totY);
-          ctx.stroke();
-
-          ctx.fillStyle = "#475569";
-          ctx.font = "12px sans-serif";
-          ctx.fillText("Taxable Subtotal:", sheetX + 420, totY + 30);
-          ctx.fillText("CGST (9.0%):", sheetX + 420, totY + 55);
-          ctx.fillText("SGST (9.0%):", sheetX + 420, totY + 80);
-
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "bold 13px sans-serif";
-          ctx.fillText("₹25,000.00", sheetX + 600, totY + 30);
-          ctx.fillText("₹2,250.00", sheetX + 600, totY + 55);
-          ctx.fillText("₹2,250.00", sheetX + 600, totY + 80);
-
-          // Total Bar
-          ctx.fillStyle = "#0ea5e9";
-          ctx.fillRect(sheetX + 400, totY + 100, sheetW - 440, 40);
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 15px sans-serif";
-          ctx.fillText("TOTAL (INCL. GST):", sheetX + 415, totY + 126);
-          ctx.fillText("₹29,500.00", sheetX + 600, totY + 126);
-
-          // Stamp & Signature
-          ctx.fillStyle = "#64748b";
-          ctx.font = "11px sans-serif";
-          ctx.fillText("Authorized Signatory — Brightloop Technologies Pvt. Ltd.", sheetX + 40, sheetY + 680);
-
-          // Right Box: Sharing & Actions Panel
-          const shareX = 1020;
-          const shareW = 700;
-          roundRect(ctx, shareX, 140, shareW, sheetH, 16, C.card, C.brand);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 26px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Direct Distribution & Print Studio", shareX + 40, 200);
-
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "16px sans-serif";
-          ctx.fillText("Share invoice links or trigger print-to-PDF with a single click.", shareX + 40, 235);
-
-          // Action Cards
-          const actions = [
-            { icon: "🖨️", title: "Print / Save as PDF", desc: "Native window.print() formatted specifically for A4 paper and PDF drivers.", col: C.brand },
-            { icon: "💬", title: "WhatsApp Direct Share", desc: "Sends pre-filled message with invoice summary and instant payment link.", col: C.green },
-            { icon: "✉️", title: "Email Invoice Notification", desc: "Launches mailto link with structured subject and invoice body.", col: C.purple },
-            { icon: "🔗", title: "Public Shareable URL", desc: "Copies clean permalink: /invoice/public/INV-2026-001 for customer view.", col: C.teal }
-          ];
-
-          actions.forEach((act, idx) => {
-            const ay = 280 + idx * 135;
-            roundRect(ctx, shareX + 40, ay, shareW - 80, 115, 10, "#090d16", act.col);
-
-            ctx.fillStyle = act.col;
-            ctx.font = "32px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(act.icon, shareX + 90, ay + 65);
-
-            ctx.textAlign = "left";
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 18px sans-serif";
-            ctx.fillText(act.title, shareX + 140, ay + 48);
-
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "14px sans-serif";
-            ctx.fillText(act.desc, shareX + 140, ay + 78);
-          });
-
+          drawCursor(780, 520, p > 0.5);
           drawNarration(this.voice, p);
         }
       },
       {
         id: 7,
-        title: "Operations & Billing Staff Governance",
+        title: "Subscriptions & Subscriber Onboarding",
         duration: 4.5,
-        voice: "Staff members have access to operational workflows while sensitive system configurations remain protected.",
+        voice: "Subscriptions support multi-tier plans, add-ons, flexible billing terms, and immediate lifecycle management.",
         draw(t, p) {
-          drawHeader(7, "Operations & Finance Staff Governance");
+          drawHeader(7, "Subscription Management & Plan Configuration");
 
-          // Profile Banner
-          roundRect(ctx, 160, 160, 1600, 160, 16, C.card, C.teal);
+          drawScreenFrame(images.subs, null, { x: 80, y: 120, w: 1350, h: 810 }, 1.05, 40, p * 30);
 
-          // Avatar
-          ctx.fillStyle = "rgba(20, 184, 166, 0.2)";
-          ctx.beginPath();
-          ctx.arc(260, 240, 50, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = C.teal;
-          ctx.font = "bold 36px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText("PS", 260, 252);
+          drawCallout(1460, 180, "Onboarding Wizard", "Step-by-step subscription creation workflow.", "#0ea5e9");
+          drawCallout(1460, 320, "Catalog Integration", "Links products, variants, and recurring rates.", "#10b981");
+          drawCallout(1460, 460, "Upgrade & Downgrade", "Instant tier transitions with pro-rata logic.", "#14b8a6");
 
-          // User details
-          ctx.textAlign = "left";
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 28px sans-serif";
-          ctx.fillText("Priya Sharma", 340, 225);
-
-          roundRect(ctx, 520, 203, 140, 28, 6, "rgba(20, 184, 166, 0.15)", C.teal);
-          ctx.fillStyle = C.teal;
-          ctx.font = "bold 12px sans-serif";
-          ctx.fillText("FINANCE STAFF", 535, 222);
-
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "16px sans-serif";
-          ctx.fillText("staff@brightloop.io  •  Operations, Customer Assistance & Billing Maintenance", 340, 260);
-
-          // 3 Columns: Permissions Matrix
-          const perms = [
-            {
-              title: "Operational Capabilities",
-              items: ["✓ View full customer directory", "✓ Execute billing runs & manual invoices", "✓ Record manual & offline payments", "✓ Update subscriber contact information"],
-              col: C.green
-            },
-            {
-              title: "Subscription Management",
-              items: ["✓ Upgrade or downgrade plans", "✓ Apply discounts & coupon codes", "✓ Extend trial periods", "✓ Track retrying invoices in dunning"],
-              col: C.brand
-            },
-            {
-              title: "Protected Governance",
-              items: ["✗ Cannot delete audit log history", "✗ Cannot modify root database credentials", "✗ Cannot alter global tax structures", "✗ Cannot invite new system administrators"],
-              col: "#ef4444"
-            }
-          ];
-
-          perms.forEach((col, idx) => {
-            const cx = 160 + idx * 550;
-            const cy = 360;
-            roundRect(ctx, cx, cy, 510, 480, 12, C.card, C.cardBorder);
-
-            roundRect(ctx, cx + 25, cy + 25, 30, 30, 6, "rgba(30, 41, 59, 0.8)", col.col);
-            ctx.fillStyle = col.col;
-            ctx.beginPath();
-            ctx.arc(cx + 40, cy + 40, 6, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 20px sans-serif";
-            ctx.fillText(col.title, cx + 70, cy + 47);
-
-            col.items.forEach((item, itemIdx) => {
-              const iy = cy + 110 + itemIdx * 80;
-              roundRect(ctx, cx + 25, iy, 460, 60, 8, "#090d16", "#334155");
-
-              ctx.fillStyle = item.startsWith("✓") ? C.green : "#ef4444";
-              ctx.font = "bold 16px sans-serif";
-              ctx.fillText(item.slice(0, 1), cx + 45, iy + 36);
-
-              ctx.fillStyle = C.text;
-              ctx.font = "15px sans-serif";
-              ctx.fillText(item.slice(2), cx + 70, iy + 36);
-            });
-          });
-
+          drawCursor(500 + p * 150, 400);
           drawNarration(this.voice, p);
         }
       },
       {
         id: 8,
-        title: "Customer Self-Service Portal",
+        title: "Staff Operations & Customer Administration",
         duration: 4.5,
-        voice: "Subscribers access their self-service portal to review subscriptions, view upcoming renewals, and download invoices.",
+        voice: "Staff members manage day-to-day operations under staff@brightloop.io with protected administration.",
         draw(t, p) {
-          drawHeader(8, "Customer Self-Service Portal Experience");
+          drawHeader(8, "Staff Operations & Customer Management");
 
-          // Customer portal frame mockup
-          roundRect(ctx, 160, 140, 1600, 720, 16, C.card, C.teal);
+          drawScreenFrame(images.staff, null, { x: 80, y: 120, w: 1350, h: 810 }, 1.04, 30, 40);
 
-          // Top portal navbar
-          roundRect(ctx, 160, 140, 1600, 80, 16, "#070b14", C.cardBorder);
-          ctx.fillStyle = C.teal;
-          ctx.beginPath();
-          ctx.arc(205, 180, 14, 0, Math.PI * 2);
-          ctx.fill();
+          drawCallout(1460, 180, "Customer Directory", "Full customer records, GSTIN, and contact details.", "#0ea5e9");
+          drawCallout(1460, 320, "Role Isolation", "Staff can assist customers without accessing credentials.", "#10b981");
+          drawCallout(1460, 460, "Audit Trail", "Every operator action logged to audit trail table.", "#f59e0b");
 
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 20px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Brightloop Portal", 230, 187);
-
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "14px monospace";
-          ctx.fillText("Arjun Mehta (Apex Logistics India)", 1340, 187);
-
-          // Left Box: Active Subscription Card
-          roundRect(ctx, 200, 260, 760, 540, 12, "#090d16", C.teal);
-
-          roundRect(ctx, 230, 290, 130, 28, 6, "rgba(20, 184, 166, 0.2)", C.teal);
-          ctx.fillStyle = C.teal;
-          ctx.font = "bold 12px sans-serif";
-          ctx.fillText("ACTIVE PLAN", 245, 309);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 32px sans-serif";
-          ctx.fillText("Enterprise Cloud Suite", 230, 365);
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "16px sans-serif";
-          ctx.fillText("Unlimited API calls, dedicated account manager, 99.99% uptime SLA.", 230, 400);
-
-          // Details grid
-          roundRect(ctx, 230, 440, 330, 90, 8, C.card, C.cardBorder);
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "13px sans-serif";
-          ctx.fillText("RENEWAL AMOUNT", 250, 470);
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 24px sans-serif";
-          ctx.fillText("₹29,500 / month", 250, 505);
-
-          roundRect(ctx, 590, 440, 330, 90, 8, C.card, C.cardBorder);
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "13px sans-serif";
-          ctx.fillText("NEXT INVOICE DATE", 610, 470);
-          ctx.fillStyle = C.green;
-          ctx.font = "bold 24px sans-serif";
-          ctx.fillText("30 Nov 2026", 610, 505);
-
-          // Action button
-          roundRect(ctx, 230, 570, 700, 56, 8, C.teal, null);
-          ctx.fillStyle = "#070b14";
-          ctx.font = "bold 18px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText("Manage Subscription & Payment Method →", 580, 605);
-
-          // Right Box: Customer Invoices List
-          roundRect(ctx, 1000, 260, 720, 540, 12, "#090d16", C.cardBorder);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 22px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Billing Statements & Tax Receipts", 1030, 305);
-
-          const custInvoices = [
-            { id: "INV-2026-001", date: "31 Oct 2026", amount: "₹29,500", status: "Paid" },
-            { id: "INV-2026-000", date: "30 Sep 2026", amount: "₹29,500", status: "Paid" },
-            { id: "INV-2026-PREV", date: "31 Aug 2026", amount: "₹29,500", status: "Paid" }
-          ];
-
-          custInvoices.forEach((inv, i) => {
-            const iy = 350 + i * 110;
-            roundRect(ctx, 1030, iy, 660, 85, 8, C.card, "#334155");
-
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 16px monospace";
-            ctx.fillText(inv.id, 1055, iy + 36);
-
-            ctx.fillStyle = C.textMuted;
-            ctx.font = "14px sans-serif";
-            ctx.fillText(`Issued: ${inv.date}`, 1055, iy + 62);
-
-            ctx.fillStyle = C.text;
-            ctx.font = "bold 18px sans-serif";
-            ctx.textAlign = "right";
-            ctx.fillText(inv.amount, 1550, iy + 38);
-
-            roundRect(ctx, 1490, iy + 48, 85, 24, 12, "rgba(16, 185, 129, 0.15)", C.green);
-            ctx.fillStyle = C.green;
-            ctx.font = "bold 11px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(inv.status, 1532, iy + 64);
-
-            roundRect(ctx, 1600, iy + 25, 75, 40, 6, "rgba(30, 41, 59, 0.8)", C.brand);
-            ctx.fillStyle = C.brand;
-            ctx.font = "bold 12px sans-serif";
-            ctx.fillText("PDF 📥", 1637, iy + 50);
-          });
-
+          drawCursor(600, 350 + p * 60);
           drawNarration(this.voice, p);
         }
       },
       {
         id: 9,
-        title: "MySQL Architecture & Production Verification",
+        title: "Customer Self-Service Portal Experience",
         duration: 4.5,
-        voice: "Brightloop is backed by a relational MySQL datastore and a verified automated test suite ready for production.",
+        voice: "Subscribers access their self-service portal to review subscriptions, view upcoming renewals, and download invoices.",
         draw(t, p) {
-          drawHeader(9, "MySQL Database Architecture & Production Verification");
+          drawHeader(9, "Customer Self-Service Portal Experience");
 
-          // Left Box: Database Schema Diagram
-          const leftW = 820;
-          roundRect(ctx, 140, 160, leftW, 700, 16, C.card, C.brand);
+          drawScreenFrame(images.portal, null, { x: 80, y: 120, w: 1350, h: 810 }, 1.05, 50, 50);
 
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 26px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Relational MySQL 8.0 Schema Design", 180, 215);
+          drawCallout(1460, 160, "White-Labeled Portal", "Clean portal dedicated to subscribers.", "#0ea5e9");
+          drawCallout(1460, 300, "Active Plan Overview", "Next invoice date, renewal rate & plan features.", "#10b981");
+          drawCallout(1460, 440, "Invoice History", "One-click download of past statements & receipts.", "#14b8a6");
+          drawCallout(1460, 580, "100% Tested & Verified", "28 / 28 test cases passed, ready for production.", "#8b5cf6");
 
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "15px sans-serif";
-          ctx.fillText("Normalized schema with foreign key constraints and integer paise precision.", 180, 245);
-
-          // Table cards
-          const tables = [
-            { name: "users", fields: ["id (PK, UUID)", "name, email (UNIQUE)", "password_hash (bcrypt)", "role ('admin'|'staff')"] },
-            { name: "customers", fields: ["id (PK, UUID)", "name, email, phone", "gstin, address, city", "portal_user_id (FK)"] },
-            { name: "subscriptions", fields: ["id (PK)", "customer_id (FK)", "plan_id (FK)", "status, next_invoice_date"] },
-            { name: "invoices", fields: ["id (PK)", "invoice_number (UNIQUE)", "subtotal, cgst, sgst, total", "status ('draft'|'posted'|'paid')"] }
-          ];
-
-          tables.forEach((tbl, idx) => {
-            const tx = 180 + (idx % 2) * 370;
-            const ty = 280 + Math.floor(idx / 2) * 260;
-            roundRect(ctx, tx, ty, 340, 230, 10, "#090d16", C.cardBorder);
-
-            roundRect(ctx, tx, ty, 340, 42, 10, "rgba(14, 165, 233, 0.15)", C.brand);
-            ctx.fillStyle = C.brand;
-            ctx.font = "bold 15px monospace";
-            ctx.textAlign = "left";
-            ctx.fillText(`TABLE: ${tbl.name}`, tx + 18, ty + 26);
-
-            tbl.fields.forEach((f, fIdx) => {
-              ctx.fillStyle = fIdx === 0 ? C.teal : C.textMuted;
-              ctx.font = "13px monospace";
-              ctx.fillText(f, tx + 18, ty + 75 + fIdx * 35);
-            });
-          });
-
-          // Right Box: Verification & Test Suite Passing
-          const rightX = 1000;
-          const rightW = 780;
-          roundRect(ctx, rightX, 160, rightW, 700, 16, C.card, C.green);
-
-          ctx.fillStyle = C.text;
-          ctx.font = "bold 26px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("Production Quality Verification", rightX + 40, 215);
-
-          ctx.fillStyle = C.textMuted;
-          ctx.font = "15px sans-serif";
-          ctx.fillText("Full automated test execution covering end-to-end billing workflows.", rightX + 40, 245);
-
-          // Checklist
-          const tests = [
-            "Admin authentication & session restoration (/api/auth/me)",
-            "Financial overview & MRR analytics generation",
-            "Deterministic billing run execution & zero duplicate checks",
-            "Tax Invoice creation, line item calculations & status updates",
-            "Payment recording with integer paise reconciliation",
-            "Customer portal queries & statements retrieval",
-            "Production bundle compiled with zero errors (bun run build)",
-            "Linter analysis passing cleanly with zero errors (bun run lint)"
-          ];
-
-          tests.forEach((tName, i) => {
-            const ty = 290 + i * 58;
-            roundRect(ctx, rightX + 40, ty, rightW - 80, 48, 8, "#090d16", "#334155");
-
-            roundRect(ctx, rightX + 55, ty + 12, 24, 24, 12, "rgba(16, 185, 129, 0.2)", C.green);
-            ctx.fillStyle = C.green;
-            ctx.font = "bold 14px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("✓", rightX + 67, ty + 29);
-
-            ctx.textAlign = "left";
-            ctx.fillStyle = C.text;
-            ctx.font = "14px sans-serif";
-            ctx.fillText(tName, rightX + 95, ty + 30);
-          });
-
-          // Summary Banner
-          roundRect(ctx, rightX + 40, 770, rightW - 80, 65, 8, "rgba(16, 185, 129, 0.15)", C.green);
-          ctx.fillStyle = C.green;
-          ctx.font = "bold 20px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText("28 / 28 TEST SUITE PASSED  •  100% PRODUCTION READY", rightX + rightW / 2, 810);
-
+          drawCursor(900, 450);
           drawNarration(this.voice, p);
         }
       }
     ];
 
-    // VIDEO RECORDER RUNNER
+    // VIDEO RECORDER ENGINE
     async function startRecording() {
-      statusEl.innerText = "RECORDING FULL 1080P VIDEO...";
-      progressEl.innerText = "Capturing canvas frames and synthesizing synchronized audio...";
+      statusEl.innerText = "LOADING SCREENSHOTS...";
+      await preloadImages();
 
-      // Setup Canvas Stream at 30 fps
+      statusEl.innerText = "RECORDING REAL SCREEN WALKTHROUGH (1080P)...";
+      progressEl.innerText = "Synthesizing audio and rendering actual application recordings...";
+
       const canvasStream = canvas.captureStream(30);
-
-      // Combine Canvas Video Track + Web Audio Track
       const combinedStream = new MediaStream([
         ...canvasStream.getVideoTracks(),
         ...audioDest.stream.getAudioTracks()
@@ -1222,7 +491,7 @@
 
       const recorder = new MediaRecorder(combinedStream, {
         mimeType: mimeType,
-        videoBitsPerSecond: 6000000 // 6 Mbps high quality
+        videoBitsPerSecond: 6000000
       });
 
       const chunks = [];
@@ -1231,11 +500,11 @@
       };
 
       recorder.onstop = async () => {
-        statusEl.innerText = "PROCESSING & SAVING VIDEO...";
-        progressEl.innerText = "Uploading generated video to /api/save-video...";
+        statusEl.innerText = "SAVING REAL SCREEN VIDEO...";
+        progressEl.innerText = "Writing brightloop_presentation.webm to disk...";
 
         const blob = new Blob(chunks, { type: 'video/webm' });
-        console.log(`[Recorder] Recorded video blob size: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`[Recorder] Final video size: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
 
         try {
           const resp = await fetch("/api/save-video", {
@@ -1244,8 +513,8 @@
             body: blob
           });
           const res = await resp.json();
-          statusEl.innerText = "✓ VIDEO CREATED & SAVED SUCCESSFULLY!";
-          progressEl.innerHTML = `Video saved to: <b style="color:#0ea5e9">${res.url}</b> (${(blob.size / 1024 / 1024).toFixed(2)} MB).`;
+          statusEl.innerText = "✓ REAL SCREEN WALKTHROUGH VIDEO READY!";
+          progressEl.innerHTML = `Saved to: <b style="color:#0ea5e9">${res.url}</b> (${(blob.size / 1024 / 1024).toFixed(2)} MB).`;
           window._videoRecordingResult = { success: true, url: res.url, size: blob.size };
         } catch (err) {
           statusEl.innerText = "Error saving video";
@@ -1254,50 +523,37 @@
         }
       };
 
-      recorder.start(500); // 500ms chunk timeslice
+      recorder.start(500);
 
-      // Animate through all scenes
       const totalScenes = SCENES.length;
-      let currentSceneIdx = 0;
-
       for (let sIdx = 0; sIdx < totalScenes; sIdx++) {
         const scene = SCENES[sIdx];
-        currentSceneIdx = sIdx + 1;
-        statusEl.innerText = `RECORDING CHAPTER ${currentSceneIdx} / ${totalScenes}: ${scene.title.toUpperCase()}`;
-
-        // Play chapter chime
-        playChord(350 + sIdx * 40);
+        statusEl.innerText = `RECORDING CHAPTER ${sIdx + 1} / ${totalScenes}: ${scene.title.toUpperCase()}`;
+        playChord(340 + sIdx * 35);
 
         const sceneFrames = Math.floor(scene.duration * 30);
         for (let f = 0; f < sceneFrames; f++) {
           const progress = f / sceneFrames;
           const time = f / 30;
 
-          // Clear
-          ctx.fillStyle = C.bg;
+          ctx.fillStyle = "#070b14";
           ctx.fillRect(0, 0, 1920, 1080);
 
-          // Typewriter audio clicks on scene 2
-          if (sIdx === 1 && f % 8 === 0) playTypeSound();
+          if (f === 15 || f === 45) playClick();
 
-          // Render Scene
           scene.draw(time, progress);
 
-          // Advance one frame
           await new Promise(r => setTimeout(r, 1000 / 30));
         }
       }
 
-      // Final celebratory chime
       playSuccessChime();
       await new Promise(r => setTimeout(r, 600));
-
       recorder.stop();
     }
 
-    // Auto-start on load
     window.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => startRecording(), 1000);
+      setTimeout(() => startRecording(), 800);
     });
   </script>
 </body>
