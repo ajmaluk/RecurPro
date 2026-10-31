@@ -42,14 +42,6 @@ type GenerateResult = {
   nextPeriodStart: string;
   total?: number;
   discountName?: string;
-  /** Set when running a preview: what *would* be billed. */
-  preview?: {
-    subtotal: number;
-    discountTotal: number;
-    taxTotal: number;
-    total: number;
-    lineCount: number;
-  };
   reason?: string;
 };
 
@@ -57,14 +49,40 @@ type GenerateResult = {
 /* Invoice builder                                                     */
 /* ------------------------------------------------------------------ */
 
-async function generateInvoiceForPeriod(
-  // Queries use this builder read-only (`write: false`); mutations write.
-  ctx: MutationCtx | QueryCtx,
+type PeriodBuild =
+  | {
+      kind: "already-billed";
+      periodStart: string;
+      periodEnd: string;
+      nextPeriodStart: string;
+      reason: string;
+    }
+  | {
+      kind: "plan";
+      periodStart: string;
+      periodEnd: string;
+      nextPeriodStart: string;
+      periodKey: string;
+      customer: Doc<"customers">;
+      dueDate: string;
+      totals: ReturnType<typeof computeInvoiceTotals>;
+      discountDocId: Id<"discounts"> | null;
+      discountName: string | null;
+      subscriptionNumber: string;
+      actorId?: Id<"users">;
+    };
+
+/**
+ * Read-only: compute exactly what one period would bill. Shared by the
+ * writer and by the dry-run preview so the two can never diverge.
+ */
+async function buildPeriodPlan(
+  ctx: QueryCtx,
   subscription: Doc<"subscriptions">,
   plan: Doc<"plans">,
   periodStart: string,
-  options: { write: boolean; actorId?: Id<"users"> },
-): Promise<GenerateResult> {
+  actorId?: Id<"users">,
+): Promise<PeriodBuild> {
   const endDay = periodEnd(periodStart, plan.billingPeriod);
   const following = nextPeriodStart(periodStart, plan.billingPeriod);
   const periodKey = `${subscription._id}|${periodStart}`;
@@ -75,7 +93,7 @@ async function generateInvoiceForPeriod(
     .first();
   if (existing) {
     return {
-      created: false,
+      kind: "already-billed",
       periodStart,
       periodEnd: endDay,
       nextPeriodStart: following,
@@ -143,27 +161,46 @@ async function generateInvoiceForPeriod(
   }
 
   const totals = computeInvoiceTotals(pricedLines, evaluation?.amount ?? 0);
-  const base: GenerateResult = {
-    created: false,
-    periodStart,
-    periodEnd: endDay,
-    nextPeriodStart: following,
-    total: totals.total,
-    discountName: evaluation?.eligible ? evaluation.discount.name : undefined,
-    preview: {
-      subtotal: totals.subtotal,
-      discountTotal: totals.discountTotal,
-      taxTotal: totals.taxTotal,
-      total: totals.total,
-      lineCount: totals.lines.length,
-    },
-  };
-
-  if (!options.write) return base;
 
   const customer = await ctx.db.get(subscription.customerId);
   if (!customer) throw new Error("Customer missing for this subscription.");
   const paymentTerm = await ctx.db.get(subscription.paymentTermId);
+
+  return {
+    kind: "plan",
+    periodStart,
+    periodEnd: endDay,
+    nextPeriodStart: following,
+    periodKey,
+    customer,
+    dueDate: addDays(periodStart, paymentTerm?.dueDays ?? 0),
+    totals,
+    discountDocId: evaluation ? (evaluation.discount.id as Id<"discounts">) : null,
+    discountName: evaluation?.eligible ? evaluation.discount.name : null,
+    subscriptionNumber: subscription.number,
+    actorId,
+  };
+}
+
+/** Writer: build the plan, then persist it — all in one transaction. */
+async function generateInvoiceForPeriod(
+  ctx: MutationCtx,
+  subscription: Doc<"subscriptions">,
+  plan: Doc<"plans">,
+  periodStart: string,
+  actorId?: Id<"users">,
+): Promise<GenerateResult> {
+  const built = await buildPeriodPlan(ctx, subscription, plan, periodStart, actorId);
+  if (built.kind === "already-billed") {
+    return {
+      created: false,
+      periodStart: built.periodStart,
+      periodEnd: built.periodEnd,
+      nextPeriodStart: built.nextPeriodStart,
+      reason: built.reason,
+    };
+  }
+  const { customer, totals, periodKey, periodEnd: endDay } = built;
   const now = Date.now();
 
   const invoiceId = await ctx.db.insert("invoices", {
@@ -174,7 +211,7 @@ async function generateInvoiceForPeriod(
     periodEnd: endDay,
     periodKey,
     issueDate: periodStart,
-    dueDate: addDays(periodStart, paymentTerm?.dueDays ?? 0),
+    dueDate: built.dueDate,
     subtotal: totals.subtotal,
     discountTotal: totals.discountTotal,
     taxTotal: totals.taxTotal,
@@ -189,7 +226,7 @@ async function generateInvoiceForPeriod(
       address: customer.address,
     },
     searchText: `${customer.name} ${subscription.number}`.toLowerCase(),
-    createdBy: options.actorId,
+    createdBy: actorId,
     createdAt: now,
   });
 
@@ -215,8 +252,8 @@ async function generateInvoiceForPeriod(
 
   // Redemption is written in the same transaction as the invoice, so the
   // counter can never drift from what was actually billed.
-  if (evaluation && totals.discountTotal > 0) {
-    const discount = await ctx.db.get(evaluation.discount.id as Id<"discounts">);
+  if (built.discountDocId && totals.discountTotal > 0) {
+    const discount = await ctx.db.get(built.discountDocId);
     const withinLimit =
       discount &&
       (discount.usageLimit == null || discount.usedCount < discount.usageLimit);
@@ -232,9 +269,8 @@ async function generateInvoiceForPeriod(
     }
   }
 
-  // `write: true` implies a mutation context (the query preview returns above).
-  await audit(ctx as MutationCtx, {
-    actorId: options.actorId,
+  await audit(ctx, {
+    actorId,
     action: "invoice.generate",
     entityType: "invoices",
     entityId: invoiceId,
@@ -246,11 +282,19 @@ async function generateInvoiceForPeriod(
     },
   });
 
-  return { ...base, created: true, invoiceId };
+  return {
+    created: true,
+    invoiceId,
+    periodStart,
+    periodEnd: endDay,
+    nextPeriodStart: built.nextPeriodStart,
+    total: totals.total,
+    discountName: built.discountName ?? undefined,
+  };
 }
 
 async function redemptionCount(
-  ctx: MutationCtx,
+  ctx: QueryCtx,
   discountId: Id<"discounts">,
   customerId: Id<"customers">,
 ): Promise<number> {
@@ -428,9 +472,7 @@ export const processBatch = internalMutation({
         let guard = 0;
         while (cursor <= todayDate && guard < 400) {
           guard += 1;
-          const result = await generateInvoiceForPeriod(ctx, subscription, plan, cursor, {
-            write: true,
-          });
+          const result = await generateInvoiceForPeriod(ctx, subscription, plan, cursor);
           if (result.created) created += 1;
           cursor = result.nextPeriodStart;
           await ctx.db.patch(subscription._id, {
@@ -534,27 +576,23 @@ export const preview = query({
       let guard = 0;
       while (cursor <= todayDate && guard < 60) {
         guard += 1;
-        const result = await generateInvoiceForPeriod(ctx, subscription, plan, cursor, {
-          write: false,
-        });
-        if (result.reason === "already billed") {
-          cursor = result.nextPeriodStart;
+        const built = await buildPeriodPlan(ctx, subscription, plan, cursor);
+        if (built.kind === "already-billed") {
+          cursor = built.nextPeriodStart;
           continue;
         }
         periods.push({
-          periodStart: result.periodStart,
-          periodEnd: result.periodEnd,
-          discountName: result.discountName ?? null,
-          ...(result.preview ?? {
-            subtotal: 0,
-            discountTotal: 0,
-            taxTotal: 0,
-            total: 0,
-            lineCount: 0,
-          }),
+          periodStart: built.periodStart,
+          periodEnd: built.periodEnd,
+          discountName: built.discountName,
+          subtotal: built.totals.subtotal,
+          discountTotal: built.totals.discountTotal,
+          taxTotal: built.totals.taxTotal,
+          total: built.totals.total,
+          lineCount: built.totals.lines.length,
         });
-        grandTotal += result.preview?.total ?? 0;
-        cursor = result.nextPeriodStart;
+        grandTotal += built.totals.total;
+        cursor = built.nextPeriodStart;
       }
       if (periods.length === 0) continue;
       rows.push({
@@ -586,8 +624,6 @@ export const billPeriod = internalMutation({
     if (!subscription) throw new Error("Subscription not found.");
     const plan = await ctx.db.get(subscription.planId);
     if (!plan) throw new Error("Plan not found.");
-    return await generateInvoiceForPeriod(ctx, subscription, plan, args.periodStart, {
-      write: true,
-    });
+    return await generateInvoiceForPeriod(ctx, subscription, plan, args.periodStart);
   },
 });
