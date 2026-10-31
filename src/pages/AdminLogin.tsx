@@ -43,13 +43,13 @@ export default function AdminLogin() {
   };
 
   const handleFillAdmin = () => {
-    setEmail("admin@recurpro.io");
+    setEmail("admin@brightloop.io");
     setPassword("Password123!");
     setError(null);
   };
 
   const handleFillStaff = () => {
-    setEmail("staff@recurpro.io");
+    setEmail("staff@brightloop.io");
     setPassword("Password123!");
     setError(null);
   };
@@ -61,7 +61,7 @@ export default function AdminLogin() {
         <div className="pointer-events-none absolute inset-0 hairline-grid opacity-20" />
         <Link to="/" className="relative flex items-center gap-2.5">
           <Logo className="size-7 text-brand" />
-          <span className="text-[15px] font-semibold text-white">RecurPro</span>
+          <span className="text-[15px] font-semibold text-white">Brightloop</span>
         </Link>
 
         <div className="relative mt-auto max-w-md">
@@ -102,7 +102,7 @@ export default function AdminLogin() {
           <div className="flex items-center justify-between lg:hidden">
             <Link to="/" className="flex items-center gap-2">
               <Logo className="size-6 text-brand" />
-              <span className="text-sm font-semibold">RecurPro</span>
+              <span className="text-sm font-semibold">Brightloop</span>
             </Link>
             <Link to="/" className="text-xs text-muted-foreground hover:text-foreground">
               ← Home
@@ -116,7 +116,7 @@ export default function AdminLogin() {
               </div>
               <CardTitle className="text-2xl font-bold tracking-tight">Staff & Admin Login</CardTitle>
               <CardDescription>
-                Sign in with your administrative account to access the RecurPro back office dashboard.
+                Sign in with your administrative account to access the Brightloop back office dashboard.
               </CardDescription>
             </CardHeader>
 
@@ -195,7 +195,7 @@ export default function AdminLogin() {
                       <span className="font-semibold text-foreground flex items-center gap-1">
                         <UserCheck className="size-3.5 text-brand" /> Admin
                       </span>
-                      <span className="text-[11px] text-muted-foreground">admin@recurpro.io</span>
+                      <span className="text-[11px] text-muted-foreground">admin@brightloop.io</span>
                     </button>
                     <button
                       type="button"
@@ -205,7 +205,7 @@ export default function AdminLogin() {
                       <span className="font-semibold text-foreground flex items-center gap-1">
                         <UserCheck className="size-3.5 text-teal-600" /> Staff
                       </span>
-                      <span className="text-[11px] text-muted-foreground">staff@recurpro.io</span>
+                      <span className="text-[11px] text-muted-foreground">staff@brightloop.io</span>
                     </button>
                   </div>
                   <div className="flex justify-between items-center text-[11px] text-muted-foreground pt-0.5 border-t border-border/40">

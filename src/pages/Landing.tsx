@@ -82,7 +82,7 @@ export default function Landing() {
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2.5">
             <Logo className="size-7 text-brand" />
-            <span className="text-[15px] font-semibold tracking-tight">RecurPro</span>
+            <span className="text-[15px] font-semibold tracking-tight">Brightloop</span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             <a href="#product" className="hover:text-foreground">
@@ -123,7 +123,7 @@ export default function Landing() {
               <span className="text-brand">and never twice.</span>
             </h1>
             <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-              RecurPro runs your daily, weekly, monthly and yearly billing on a
+              Brightloop runs your daily, weekly, monthly and yearly billing on a
               schedule, turns quotations into subscriptions, applies GST and
               discounts in exact paise, and hands your customers a portal of their
               own.
@@ -438,7 +438,7 @@ export default function Landing() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-2">
             <Logo className="size-5 text-brand" />
-            <span className="font-medium text-foreground">RecurPro</span>
+            <span className="font-medium text-foreground">Brightloop</span>
             <span className="text-xs">· recurring subscription management &amp; billing</span>
           </div>
           <div className="flex flex-wrap items-center gap-5 text-xs">

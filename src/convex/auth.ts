@@ -1,5 +1,5 @@
 // The template's auth file, extended with the Password provider required by
-// RecurPro (email + password signup/signin). The existing OTP and guest
+// Brightloop (email + password signup/signin). The existing OTP and guest
 // providers are left untouched.
 //
 // Rules enforced here, server-side, on every credential flow:

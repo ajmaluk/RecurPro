@@ -183,7 +183,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-2 px-5 py-5">
           <Logo className="size-7 text-brand" />
           <div className="leading-tight">
-            <p className="text-sm font-semibold text-white">RecurPro</p>
+            <p className="text-sm font-semibold text-white">Brightloop</p>
             <p className="text-[11px] text-white/50">Back office</p>
           </div>
         </div>
@@ -203,7 +203,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </button>
         <div className="flex items-center gap-2">
           <Logo className="size-5 text-brand" />
-          <span className="text-sm font-semibold">RecurPro</span>
+          <span className="text-sm font-semibold">Brightloop</span>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -243,7 +243,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SheetContent side="left" className="w-72 border-sidebar-border bg-sidebar p-0">
           <SheetHeader className="flex-row items-center gap-2 border-b border-sidebar-border px-5 py-4">
             <Logo className="size-6 text-brand" />
-            <SheetTitle className="text-white">RecurPro</SheetTitle>
+            <SheetTitle className="text-white">Brightloop</SheetTitle>
             <button
               className="ml-auto text-white/60 hover:text-white"
               onClick={() => setOpen(false)}

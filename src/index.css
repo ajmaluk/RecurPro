@@ -42,7 +42,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* RecurPro — "Modern" theme: ink neutrals, teal accent, layered cards. */
+/* Brightloop — "Modern" theme: ink neutrals, teal accent, layered cards. */
 :root {
   --radius: 0.5rem;
   --background: oklch(0.984 0.004 220);
@@ -77,7 +77,7 @@
   --sidebar-border: oklch(0.31 0.018 250);
   --sidebar-ring: oklch(0.72 0.11 190);
 
-  /* Brand extras used by RecurPro components. */
+  /* Brand extras used by Brightloop components. */
   --brand: oklch(0.58 0.095 191);
   --brand-strong: oklch(0.48 0.085 193);
   --brand-soft: oklch(0.945 0.04 188);
@@ -138,7 +138,7 @@
   }
 }
 
-/* RecurPro helpers (kept out of @theme so the template block stays intact). */
+/* Brightloop helpers (kept out of @theme so the template block stays intact). */
 @layer components {
   .text-brand {
     color: var(--brand);

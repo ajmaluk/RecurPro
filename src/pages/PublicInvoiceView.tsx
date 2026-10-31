@@ -42,7 +42,7 @@ export default function PublicInvoiceView() {
       {/* Top Banner with brand & portal login */}
       <div className="no-print mx-auto max-w-4xl mb-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
         <Link to="/" className="flex items-center gap-1.5 font-medium text-foreground hover:text-brand">
-          <ArrowLeft className="size-3.5" /> Return to RecurPro
+          <ArrowLeft className="size-3.5" /> Return to Brightloop
         </Link>
         <div className="flex items-center gap-2">
           <span>Official Customer Statement</span>

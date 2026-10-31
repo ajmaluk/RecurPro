@@ -1,5 +1,5 @@
 async function runTestSuite() {
-  console.log("=== RecurPro End-To-End System Flow Test ===");
+  console.log("=== Brightloop End-To-End System Flow Test ===");
   const base = "http://localhost:5173/api";
   let testsPassed = 0;
   let testsFailed = 0;
@@ -15,14 +15,14 @@ async function runTestSuite() {
   }
 
   try {
-    // 1. Auth Login (Test RecurPro email alias)
+    // 1. Auth Login (Test Brightloop admin login)
     const loginRes = await fetch(`${base}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "admin@recurpro.io", password: "Password123!" }),
+      body: JSON.stringify({ email: "admin@brightloop.io", password: "Password123!" }),
     });
     const loginData = await loginRes.json();
-    assert(loginRes.ok && !!loginData.token, "Admin authentication with admin@recurpro.io returns valid JWT token");
+    assert(loginRes.ok && !!loginData.token, "Admin authentication with admin@brightloop.io returns valid JWT token");
     const token = loginData.token;
     const authHeaders = {
       "Content-Type": "application/json",

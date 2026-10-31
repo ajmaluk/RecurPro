@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { db, UserRow, isUsingMySQL } from "./db";
 
-const JWT_SECRET = process.env.JWT_SECRET || "recurpro_jwt_secret_key_2026";
+const JWT_SECRET = process.env.JWT_SECRET || "brightloop_jwt_secret_key_2026";
 export const authRouter = Router();
 
 export interface AuthenticatedRequest extends Request {
@@ -222,7 +222,7 @@ authRouter.post("/seed", async (req: Request, res: Response) => {
   try {
     const {
       adminName = "Administrator",
-      adminEmail = "admin@recurpro.io",
+      adminEmail = "admin@brightloop.io",
       adminPassword = "Password123!",
     } = req.body;
 
@@ -240,8 +240,8 @@ authRouter.post("/seed", async (req: Request, res: Response) => {
     }
 
     // 2. Create sample staff
-    const staffEmail = "support@recurpro.io";
-    if (!(await db.getUserByEmail(staffEmail)) && !(await db.getUserByEmail("support@brightloop.io"))) {
+    const staffEmail = "staff@brightloop.io";
+    if (!(await db.getUserByEmail(staffEmail)) && !(await db.getUserByEmail("staff@recurpro.io"))) {
       const hash = await bcrypt.hash("Password123!", 10);
       await db.createUser({
         id: crypto.randomUUID(),
@@ -272,7 +272,7 @@ authRouter.post("/seed", async (req: Request, res: Response) => {
 
     if (products.length === 0) {
       const cloudSuite = await db.createProduct({
-        name: "RecurPro Cloud Suite",
+        name: "Brightloop Cloud Suite",
         description: "Complete recurring billing and invoice lifecycle management platform.",
         category: "SaaS Software",
         cost_price: 1500,

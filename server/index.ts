@@ -39,7 +39,7 @@ async function startServer() {
   await seedAllDemoUsers();
 
   app.listen(PORT, () => {
-    console.log(`[Server] RecurPro Backend running on http://localhost:${PORT}`);
+    console.log(`[Server] Brightloop Backend running on http://localhost:${PORT}`);
   });
 }
 
@@ -48,6 +48,15 @@ async function seedAllDemoUsers() {
   const password_hash = await bcrypt.hash(defaultPassword, 10);
 
   // 1. Admin Account (Back Office Owner)
+  if (!(await db.getUserByEmail("admin@brightloop.io"))) {
+    await db.createUser({
+      id: crypto.randomUUID(),
+      name: "Alex Rivera (Admin)",
+      email: "admin@brightloop.io",
+      password_hash,
+      role: "admin",
+    });
+  }
   if (!(await db.getUserByEmail("admin@recurpro.io"))) {
     await db.createUser({
       id: crypto.randomUUID(),
@@ -59,6 +68,15 @@ async function seedAllDemoUsers() {
   }
 
   // 2. Operations & Billing Staff Account
+  if (!(await db.getUserByEmail("staff@brightloop.io"))) {
+    await db.createUser({
+      id: crypto.randomUUID(),
+      name: "Priya Sharma (Finance Staff)",
+      email: "staff@brightloop.io",
+      password_hash,
+      role: "staff",
+    });
+  }
   if (!(await db.getUserByEmail("staff@recurpro.io"))) {
     await db.createUser({
       id: crypto.randomUUID(),
@@ -96,7 +114,7 @@ async function seedAllDemoUsers() {
   let suite: any = products[0];
   if (!suite) {
     suite = await db.createProduct({
-      name: "RecurPro Cloud Suite",
+      name: "Brightloop Cloud Suite",
       description: "Complete recurring billing and invoice lifecycle management platform.",
       category: "SaaS Software",
       cost_price: 1500,
@@ -199,8 +217,8 @@ async function seedAllDemoUsers() {
   }
 
   console.log(`[Seed] Demo users initialized:`);
-  console.log(`  1. Admin:    admin@recurpro.io      / ${defaultPassword}`);
-  console.log(`  2. Staff:    staff@recurpro.io      / ${defaultPassword}`);
+  console.log(`  1. Admin:    admin@brightloop.io    / ${defaultPassword}`);
+  console.log(`  2. Staff:    staff@brightloop.io    / ${defaultPassword}`);
   console.log(`  3. Customer: arjun@apexlogistics.in / ${defaultPassword}`);
   console.log(`  4. Customer: neha@zenithtech.in     / ${defaultPassword}`);
 }

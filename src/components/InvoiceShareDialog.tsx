@@ -41,7 +41,7 @@ export function InvoiceShareDialog({
   const totalFormatted = formatINR(invoice.total);
   const shareUrl = `${window.location.origin}/invoice/view/${invoice._id}`;
 
-  const summaryText = `📄 ${invoiceNumber} from RecurPro
+  const summaryText = `📄 ${invoiceNumber} from Brightloop
 To: ${customerName}
 Amount: ${totalFormatted}
 Due Date: ${invoice.dueDate}
@@ -80,9 +80,9 @@ ${shareUrl}`;
   };
 
   const handleEmail = () => {
-    const subject = encodeURIComponent(`Invoice ${invoiceNumber} from RecurPro`);
+    const subject = encodeURIComponent(`Invoice ${invoiceNumber} from Brightloop`);
     const body = encodeURIComponent(
-      `Dear ${customerName},\n\nPlease find the details for invoice ${invoiceNumber} for the amount of ${totalFormatted}.\nDue date: ${invoice.dueDate}\nStatus: ${invoice.status}\n\nYou can view and download the complete statement here:\n${shareUrl}\n\nThank you,\nRecurPro Technologies`
+      `Dear ${customerName},\n\nPlease find the details for invoice ${invoiceNumber} for the amount of ${totalFormatted}.\nDue date: ${invoice.dueDate}\nStatus: ${invoice.status}\n\nYou can view and download the complete statement here:\n${shareUrl}\n\nThank you,\nBrightloop Technologies`
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };

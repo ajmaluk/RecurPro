@@ -172,7 +172,7 @@ createRoot(document.getElementById("root")!).render(
                 element={
                   <RequireAuth
                     title="Sign in to the back office"
-                    description="The RecurPro back office is for staff and admin accounts."
+                    description="The Brightloop back office is for staff and admin accounts."
                     allowedRoles={["admin", "staff"]}
                     loginPath="/admin/login"
                     redirectImmediately={true}

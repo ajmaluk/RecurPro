@@ -1,4 +1,4 @@
-# RecurPro — Modern Recurring Billing & Subscription Management Platform
+# Brightloop — Modern Recurring Billing & Subscription Management Platform
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 19](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
@@ -6,7 +6,7 @@
 [![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 
-**RecurPro** (formerly Brightloop) is an enterprise-grade recurring billing, subscription lifecycle, and customer invoicing engine built for SaaS, modern digital services, and subscription businesses.
+**Brightloop** is an enterprise-grade recurring billing, subscription lifecycle, and customer invoicing platform built for SaaS, modern digital services, and subscription businesses.
 
 It features complete relational **MySQL database** persistence, robust JWT session management, dedicated back-office and customer portals, automated billing runs with dunning schedules, and a comprehensive **Tax Invoicing** system with **instant PDF printing**, **quick-print modal**, and **direct sharing** (WhatsApp, Email, shareable public link).
 
@@ -62,7 +62,7 @@ It features complete relational **MySQL database** persistence, robust JWT sessi
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                 RecurPro Frontend (React 19)                │
+│                 Brightloop Frontend (React 19)              │
 │       Vite • Tailwind CSS v4 • Radix UI • Framer Motion     │
 ├──────────────────────────────┬──────────────────────────────┤
 │      Back Office Portal      │    Customer Portal (/portal) │
@@ -101,8 +101,8 @@ The platform initializes with pre-configured demo accounts covering all user rol
 
 | Role | Email | Password | Primary Access |
 | :--- | :--- | :--- | :--- |
-| **System Administrator** | `admin@recurpro.io` | `Password123!` | Complete Back Office, Admin Controls, Staff & Audit Logs |
-| **Operations Staff** | `staff@recurpro.io` | `Password123!` | Invoices, Customers, Subscriptions, Catalog, Billing Runs |
+| **System Administrator** | `admin@brightloop.io` | `Password123!` | Complete Back Office, Admin Controls, Staff & Audit Logs |
+| **Operations Staff** | `staff@brightloop.io` | `Password123!` | Invoices, Customers, Subscriptions, Catalog, Billing Runs |
 | **Customer (Apex Logistics)** | `arjun@apexlogistics.in` | `Password123!` | Customer Portal (`/portal/dashboard`), Invoices & Receipts |
 | **Customer (Zenith Tech)** | `neha@zenithtech.in` | `Password123!` | Customer Portal (`/portal/dashboard`), Invoices & Receipts |
 
@@ -136,7 +136,7 @@ Subscribers can log in to:
 
 ## Invoice Print & Direct Share
 
-RecurPro provides multiple ways to view, print, and share invoices:
+Brightloop provides multiple ways to view, print, and share invoices:
 
 1. **Row Quick Actions**:
    - In both `/invoices` and `/portal/invoices`, click the **Printer icon** on any invoice row to open the **Quick Print Modal** with instant 1-click browser printing (`window.print()`).
@@ -154,12 +154,12 @@ RecurPro provides multiple ways to view, print, and share invoices:
 
 ### Prerequisites
 - [Bun](https://bun.sh/) (Recommended) or Node.js (v20+)
-- MySQL Server 8.0+ (Optional: if not running, RecurPro automatically runs on its in-memory fallback store)
+- MySQL Server 8.0+ (Optional: if not running, Brightloop automatically runs on its in-memory fallback store)
 
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>
-cd RecurPro
+cd Brightloop
 ```
 
 ### 2. Install Dependencies
@@ -179,8 +179,8 @@ MYSQL_HOST=127.0.0.1
 MYSQL_PORT=3306
 MYSQL_USER=root
 MYSQL_PASSWORD=
-MYSQL_DATABASE=recurpro
-JWT_SECRET=recurpro_jwt_secret_key_2026_super_secure
+MYSQL_DATABASE=brightloop
+JWT_SECRET=brightloop_jwt_secret_key_2026_super_secure
 PORT=3001
 VITE_CONVEX_URL=https://placeholder-app.convex.cloud
 CONVEX_SITE_URL=http://localhost:5173
@@ -202,13 +202,13 @@ bun run dev
 ```
 *Starts Vite dev server on `http://localhost:5173`.*
 
-Open your browser at `http://localhost:5173` to explore RecurPro.
+Open your browser at `http://localhost:5173` to explore Brightloop.
 
 ---
 
 ## Database Setup & MySQL Schema
 
-If you have MySQL running locally (via MySQL Server, Docker, or XAMPP), RecurPro automatically creates the `recurpro` database and all required tables upon starting the backend.
+If you have MySQL running locally (via MySQL Server, Docker, or XAMPP), Brightloop automatically creates the `brightloop` database and all required tables upon starting the backend.
 
 ### Schema Structure:
 - `users`: Staff, admin, and customer credentials with bcrypt hashes.
@@ -226,7 +226,7 @@ If you have MySQL running locally (via MySQL Server, Docker, or XAMPP), RecurPro
 
 ## Testing & Quality Assurance
 
-RecurPro includes a comprehensive end-to-end integration test suite verifying authentication, billing runs, CRUD operations, catalog items, and customer portal endpoints.
+Brightloop includes a comprehensive end-to-end integration test suite verifying authentication, billing runs, CRUD operations, catalog items, and customer portal endpoints.
 
 ### Run End-to-End Test Suite:
 ```bash
@@ -249,7 +249,7 @@ bun run build
 ## Project Structure
 
 ```
-RecurPro/
+Brightloop/
 ├── server/                    # Node / Express Backend
 │   ├── index.ts               # Express server entrypoint & seed logic
 │   ├── db.ts                  # MySQL connection, queries & memory fallback

@@ -1,7 +1,7 @@
 /**
  * Billing calendar math.
  *
- * "Billing dates" in RecurPro are calendar dates in the business timezone
+ * "Billing dates" in Brightloop are calendar dates in the business timezone
  * (Asia/Kolkata) stored as `YYYY-MM-DD` strings, so they sort and compare
  * lexicographically. Timestamps (who/when) stay UTC epoch milliseconds.
  *

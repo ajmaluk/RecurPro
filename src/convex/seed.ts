@@ -110,8 +110,8 @@ export const seedDemo = action({
       await ctx.runQuery(internal.staff.requireAdminSelf);
     } else {
       const credentials = parseOrThrow(seedArgsSchema, {
-        adminName: args.adminName?.trim() || "RecurPro Admin",
-        adminEmail: args.adminEmail || "admin@recurpro.io",
+        adminName: args.adminName?.trim() || "Brightloop Admin",
+        adminEmail: args.adminEmail || "admin@brightloop.io",
         adminPassword: args.adminPassword || "Admin@2026",
       });
       await createAccount(ctx, {

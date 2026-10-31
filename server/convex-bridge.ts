@@ -533,7 +533,7 @@ async function handleQuery(name: string, args: any, user: any): Promise<any> {
     return user || {
       _id: "admin_default",
       name: "Administrator",
-      email: "admin@recurpro.io",
+      email: "admin@brightloop.io",
       role: "admin",
     };
   }
@@ -756,7 +756,7 @@ async function handleMutation(name: string, args: any, user: any): Promise<any> 
   }
 
   if (fn === "accounts.changePassword") {
-    const userId = user?.id || (await db.getUserByEmail("admin@recurpro.io"))?.id || (await db.getUserByEmail("admin@brightloop.io"))?.id;
+    const userId = user?.id || (await db.getUserByEmail("admin@brightloop.io"))?.id || (await db.getUserByEmail("admin@recurpro.io"))?.id;
     if (!userId) throw new Error("User session not found");
     const dbUser = await db.getUserById(userId);
     if (!dbUser) throw new Error("User record not found");

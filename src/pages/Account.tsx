@@ -50,7 +50,7 @@ export default function Account() {
         description="Manage your profile information and update your login password."
       />
 
-      <SectionCard title="Profile Details" description="Information associated with your RecurPro account">
+      <SectionCard title="Profile Details" description="Information associated with your Brightloop account">
         <div className="space-y-4">
           <div>
             <Label className="text-xs text-muted-foreground">Full Name</Label>

@@ -1,15 +1,16 @@
-// REST API client for RecurPro backend
+// REST API client for Brightloop backend
 
 const API_BASE = "";
 
 export function getToken(): string | null {
-  return localStorage.getItem("recurpro_token");
+  return localStorage.getItem("brightloop_token") || localStorage.getItem("recurpro_token");
 }
 
 export function setToken(token: string | null) {
   if (token) {
-    localStorage.setItem("recurpro_token", token);
+    localStorage.setItem("brightloop_token", token);
   } else {
+    localStorage.removeItem("brightloop_token");
     localStorage.removeItem("recurpro_token");
   }
 }

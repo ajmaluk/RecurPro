@@ -110,7 +110,7 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
               <label className="text-sm font-medium" htmlFor="seed-name">
                 Your name
               </label>
-              <Input id="seed-name" name="name" defaultValue="RecurPro Admin" required disabled={busy} />
+              <Input id="seed-name" name="name" defaultValue="Brightloop Admin" required disabled={busy} />
             </div>
             <div className="sm:col-span-2">
               <label className="text-sm font-medium" htmlFor="seed-email">
@@ -120,7 +120,7 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
                 id="seed-email"
                 name="email"
                 type="email"
-                defaultValue="admin@recurpro.io"
+                defaultValue="admin@brightloop.io"
                 required
                 disabled={busy}
               />
@@ -235,7 +235,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
         <div className="pointer-events-none absolute inset-0 hairline-grid opacity-20" />
         <Link to="/" className="relative flex items-center gap-2.5">
           <Logo className="size-7 text-brand" />
-          <span className="text-[15px] font-semibold text-white">RecurPro</span>
+          <span className="text-[15px] font-semibold text-white">Brightloop</span>
         </Link>
         <div className="relative mt-auto max-w-md">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white">
@@ -265,7 +265,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
           <div className="mb-6 flex items-center justify-between lg:hidden">
             <Link to="/" className="flex items-center gap-2">
               <Logo className="size-6 text-brand" />
-              <span className="text-sm font-semibold">RecurPro</span>
+              <span className="text-sm font-semibold">Brightloop</span>
             </Link>
             <Link to="/" className="text-sm text-muted-foreground">
               Back
@@ -279,7 +279,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
               onClick={() => {
                 setPortalType("admin");
                 setMode("signIn");
-                setEmailInput("admin@recurpro.io");
+                setEmailInput("admin@brightloop.io");
                 setPasswordInput("Password123!");
                 setError(null);
               }}
@@ -430,23 +430,23 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          onClick={() => handleFill("admin@recurpro.io")}
+                          onClick={() => handleFill("admin@brightloop.io")}
                           className="flex flex-col items-start rounded border border-border/80 bg-background/80 p-2 text-left hover:border-brand transition-colors"
                         >
                           <span className="font-semibold text-foreground flex items-center gap-1">
                             <UserCheck className="size-3 text-brand" /> Admin
                           </span>
-                          <span className="text-[11px] text-muted-foreground">admin@recurpro.io</span>
+                          <span className="text-[11px] text-muted-foreground">admin@brightloop.io</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleFill("staff@recurpro.io")}
+                          onClick={() => handleFill("staff@brightloop.io")}
                           className="flex flex-col items-start rounded border border-border/80 bg-background/80 p-2 text-left hover:border-teal-600 transition-colors"
                         >
                           <span className="font-semibold text-foreground flex items-center gap-1">
                             <UserCheck className="size-3 text-teal-600" /> Staff
                           </span>
-                          <span className="text-[11px] text-muted-foreground">staff@recurpro.io</span>
+                          <span className="text-[11px] text-muted-foreground">staff@brightloop.io</span>
                         </button>
                       </div>
                     ) : (

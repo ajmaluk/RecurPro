@@ -1,7 +1,7 @@
 /**
  * Money utilities.
  *
- * Every monetary value in RecurPro is an **integer number of paise**.
+ * Every monetary value in Brightloop is an **integer number of paise**.
  * Floats never touch a total: forms collect rupees (possibly with decimals),
  * the UI converts to paise before sending, and every calculation below is
  * integer-in / integer-out. Percentages are stored as basis points (18% = 1800).

@@ -122,7 +122,7 @@ export function InvoicePrintView({
               <Logo className="size-8 text-teal-600 print:text-black" />
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-neutral-900">
-                  RecurPro Technologies Pvt. Ltd.
+                  Brightloop Technologies Pvt. Ltd.
                 </h1>
                 <p className="text-xs text-neutral-500">
                   Cloud Subscription & Recurring Billing Platform
@@ -132,7 +132,7 @@ export function InvoicePrintView({
             <div className="pt-2 text-xs leading-relaxed text-neutral-600">
               <p>CIN: U72900PN2023PTC123456 · GSTIN: <strong>27AABCB1515L1Z2</strong></p>
               <p>Suite 402, Embassy TechZone, Hinjawadi Phase 2, Pune 411057, MH, India</p>
-              <p>Email: billing@recurpro.io · Web: https://recurpro.io</p>
+              <p>Email: billing@brightloop.io · Web: https://brightloop.io</p>
             </div>
           </div>
 
@@ -260,7 +260,7 @@ export function InvoicePrintView({
               <p className="font-bold text-neutral-900">Bank & Remittance Details:</p>
               <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5">
                 <span>Beneficiary:</span>
-                <span className="font-medium text-neutral-900">RecurPro Technologies Pvt Ltd</span>
+                <span className="font-medium text-neutral-900">Brightloop Technologies Pvt Ltd</span>
                 <span>Bank:</span>
                 <span className="font-medium text-neutral-900">HDFC Bank Ltd</span>
                 <span>Account No:</span>
@@ -268,7 +268,7 @@ export function InvoicePrintView({
                 <span>IFSC Code:</span>
                 <span className="font-medium text-neutral-900">HDFC0000123</span>
                 <span>UPI ID:</span>
-                <span className="font-medium text-neutral-900">recurpro@hdfcbank</span>
+                <span className="font-medium text-neutral-900">brightloop@hdfcbank</span>
               </div>
             </div>
           </div>
@@ -352,7 +352,7 @@ export function InvoicePrintView({
 
           <div className="text-center sm:text-right">
             <div className="mb-2 font-medium text-neutral-800">
-              For RecurPro Technologies Pvt. Ltd.
+              For Brightloop Technologies Pvt. Ltd.
             </div>
             <div className="inline-flex items-center gap-1.5 rounded border border-neutral-300 bg-neutral-50 px-3 py-2 text-neutral-600">
               <ShieldCheck className="size-4 text-emerald-600" />

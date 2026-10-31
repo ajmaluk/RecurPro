@@ -30,7 +30,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-6 px-4 sm:px-6">
           <NavLink to="/portal" className="flex items-center gap-2">
             <Logo className="size-6 text-brand" />
-            <span className="text-sm font-semibold">RecurPro</span>
+            <span className="text-sm font-semibold">Brightloop</span>
             <span className="hidden rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-strong sm:inline">
               Portal
             </span>
