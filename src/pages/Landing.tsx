@@ -137,6 +137,11 @@ export default function Landing() {
               <Button size="lg" variant="outline" asChild>
                 <Link to="/portal/login">Customer Portal Sign In</Link>
               </Button>
+              <Button size="lg" variant="secondary" asChild className="border border-border/80 gap-1.5 text-foreground hover:bg-muted">
+                <a href="/presentation.html" target="_blank">
+                  ▶ Watch Video Tour
+                </a>
+              </Button>
             </div>
             <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-border/70 pt-6">
               <div>

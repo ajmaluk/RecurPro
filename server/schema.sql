@@ -1,7 +1,7 @@
--- MySQL Schema for RecurPro Recurring Subscription & Billing Management
+-- MySQL Schema for Brightloop Recurring Subscription & Billing Management
 
-CREATE DATABASE IF NOT EXISTS `recurpro` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `recurpro`;
+CREATE DATABASE IF NOT EXISTS `brightloop` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `brightloop`;
 
 -- 1. Users & Staff
 CREATE TABLE IF NOT EXISTS `users` (

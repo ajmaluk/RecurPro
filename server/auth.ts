@@ -126,15 +126,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
       return;
     }
 
-    let user = await db.getUserByEmail(email);
-    if (!user) {
-      const normalized = email.toLowerCase().trim();
-      if (normalized === "admin@recurpro.io") {
-        user = await db.getUserByEmail("admin@brightloop.io");
-      } else if (normalized === "admin@brightloop.io") {
-        user = await db.getUserByEmail("admin@recurpro.io");
-      }
-    }
+    const user = await db.getUserByEmail(email);
     if (!user) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
@@ -241,7 +233,7 @@ authRouter.post("/seed", async (req: Request, res: Response) => {
 
     // 2. Create sample staff
     const staffEmail = "staff@brightloop.io";
-    if (!(await db.getUserByEmail(staffEmail)) && !(await db.getUserByEmail("staff@recurpro.io"))) {
+    if (!(await db.getUserByEmail(staffEmail))) {
       const hash = await bcrypt.hash("Password123!", 10);
       await db.createUser({
         id: crypto.randomUUID(),

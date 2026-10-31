@@ -176,7 +176,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   );
 
   const [emailInput, setEmailInput] = useState(
-    initialPortalType === "admin" ? "admin@recurpro.io" : "arjun@apexlogistics.in"
+    initialPortalType === "admin" ? "admin@brightloop.io" : "arjun@apexlogistics.in"
   );
   const [passwordInput, setPasswordInput] = useState("Password123!");
 
@@ -375,7 +375,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       type="email"
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
-                      placeholder={portalType === "admin" ? "admin@recurpro.io" : "you@company.in"}
+                      placeholder={portalType === "admin" ? "admin@brightloop.io" : "you@company.in"}
                       autoComplete="email"
                       required
                       disabled={busy}

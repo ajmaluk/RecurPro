@@ -57,15 +57,6 @@ async function seedAllDemoUsers() {
       role: "admin",
     });
   }
-  if (!(await db.getUserByEmail("admin@recurpro.io"))) {
-    await db.createUser({
-      id: crypto.randomUUID(),
-      name: "Alex Rivera (Admin)",
-      email: "admin@recurpro.io",
-      password_hash,
-      role: "admin",
-    });
-  }
 
   // 2. Operations & Billing Staff Account
   if (!(await db.getUserByEmail("staff@brightloop.io"))) {
@@ -73,15 +64,6 @@ async function seedAllDemoUsers() {
       id: crypto.randomUUID(),
       name: "Priya Sharma (Finance Staff)",
       email: "staff@brightloop.io",
-      password_hash,
-      role: "staff",
-    });
-  }
-  if (!(await db.getUserByEmail("staff@recurpro.io"))) {
-    await db.createUser({
-      id: crypto.randomUUID(),
-      name: "Priya Sharma (Finance Staff)",
-      email: "staff@recurpro.io",
       password_hash,
       role: "staff",
     });

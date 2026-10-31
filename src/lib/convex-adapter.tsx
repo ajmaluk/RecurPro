@@ -5,7 +5,7 @@ import { getFunctionName } from "convex/server";
 import { getToken } from "./api";
 
 // Simple reactive bus for re-fetching queries on mutations
-const MUTATION_EVENT = "recurpro_db_mutation";
+const MUTATION_EVENT = "brightloop_db_mutation";
 
 export function notifyMutation() {
   if (typeof window !== "undefined") {

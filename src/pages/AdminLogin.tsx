@@ -14,7 +14,7 @@ export default function AdminLogin() {
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo") || "/app";
 
-  const [email, setEmail] = useState("admin@recurpro.io");
+  const [email, setEmail] = useState("admin@brightloop.io");
   const [password, setPassword] = useState("Password123!");
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -133,7 +133,7 @@ export default function AdminLogin() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@recurpro.io"
+                    placeholder="admin@brightloop.io"
                     autoComplete="email"
                     required
                     disabled={busy}

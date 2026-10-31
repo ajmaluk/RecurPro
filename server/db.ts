@@ -128,7 +128,7 @@ export async function initDatabase() {
   const port = Number(process.env.MYSQL_PORT) || 3306;
   const user = process.env.MYSQL_USER || "root";
   const password = process.env.MYSQL_PASSWORD || "";
-  const database = process.env.MYSQL_DATABASE || "recurpro";
+  const database = process.env.MYSQL_DATABASE || "brightloop";
 
   try {
     // 1. Check server connection without database first to create DB if needed

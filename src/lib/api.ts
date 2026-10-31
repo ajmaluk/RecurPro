@@ -3,7 +3,7 @@
 const API_BASE = "";
 
 export function getToken(): string | null {
-  return localStorage.getItem("brightloop_token") || localStorage.getItem("recurpro_token");
+  return localStorage.getItem("brightloop_token");
 }
 
 export function setToken(token: string | null) {
@@ -11,7 +11,6 @@ export function setToken(token: string | null) {
     localStorage.setItem("brightloop_token", token);
   } else {
     localStorage.removeItem("brightloop_token");
-    localStorage.removeItem("recurpro_token");
   }
 }
 

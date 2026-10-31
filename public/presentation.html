@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brightloop — Complete Platform Video Presentation & Workflow Tour</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f293d;
+      --brand: #0ea5e9;
+      --brand-soft: rgba(14, 165, 233, 0.12);
+      --brand-glow: rgba(14, 165, 233, 0.4);
+      --teal: #14b8a6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Studio Header */
+    .studio-header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      color: var(--teal);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-tag {
+      font-size: 10px;
+      background: var(--brand-soft);
+      color: var(--brand);
+      padding: 2px 7px;
+      border-radius: 9999px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #0d9488;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #0f766e;
+    }
+
+    .btn-secondary {
+      background: #1e293b;
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+    }
+    .btn-secondary:hover {
+      background: #334155;
+    }
+
+    /* Main Stage Layout */
+    .stage-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      height: calc(100vh - 57px);
+      max-width: 1700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 1024px) {
+      .stage-container {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    /* Video Player Viewport */
+    .viewport {
+      display: flex;
+      flex-direction: column;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      border-right: 1px solid var(--card-border);
+    }
+
+    .screen-canvas {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      background: radial-gradient(circle at 50% 30%, #172554 0%, #030712 70%);
+      overflow: hidden;
+    }
+
+    .screen-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+      animation: pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.15); opacity: 0.8; }
+    }
+
+    /* Dynamic Slide Stage */
+    .slide-wrapper {
+      width: 100%;
+      max-width: 960px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(14, 165, 233, 0.1);
+      overflow: hidden;
+      position: relative;
+      z-index: 10;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide-header {
+      background: #0f172a;
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .window-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .slide-body {
+      padding: 32px 36px;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .slide-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .chapter-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--teal);
+      background: rgba(20, 184, 166, 0.12);
+      border: 1px solid rgba(20, 184, 166, 0.3);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .time-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .slide-heading {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-desc {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      max-width: 800px;
+    }
+
+    /* Visual Component Showcase */
+    .showcase-area {
+      background: #0a0f1d;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    /* Subtitle Overlay Banner */
+    .captions-bar {
+      background: rgba(10, 15, 29, 0.95);
+      border-top: 1px solid var(--card-border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 64px;
+    }
+
+    .voice-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 10px var(--teal);
+      flex-shrink: 0;
+    }
+
+    .voice-indicator.speaking {
+      animation: pulse-voice 1.2s infinite;
+    }
+
+    @keyframes pulse-voice {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    .caption-text {
+      font-size: 14px;
+      color: #e2e8f0;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    /* Video Player Controls */
+    .player-controls {
+      background: #0b1120;
+      border-top: 1px solid var(--card-border);
+      padding: 12px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #14b8a6, #0ea5e9);
+      width: 0%;
+      transition: width 0.15s linear;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .control-btn:hover {
+      background: #1e293b;
+      border-color: var(--card-border);
+    }
+
+    .control-btn.play-btn {
+      background: var(--teal);
+      color: #042f2e;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    .control-btn.play-btn:hover {
+      background: #2dd4bf;
+    }
+
+    .time-readout {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Playlist Sidebar */
+    .playlist-sidebar {
+      background: #0d1322;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .playlist-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .playlist-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .chapter-list {
+      list-style: none;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .chapter-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      display: flex;
+      gap: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .chapter-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .chapter-item.active {
+      background: rgba(20, 184, 166, 0.1);
+      border-left: 3px solid var(--teal);
+    }
+
+    .chapter-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      padding-top: 2px;
+    }
+
+    .chapter-info h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 3px;
+    }
+
+    .chapter-item.active .chapter-info h4 {
+      color: var(--teal);
+    }
+
+    .chapter-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* UI Mockup Elements */
+    .mock-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .mock-metric {
+      background: #111827;
+      border: 1px solid #1f293d;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .mock-metric-lbl {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .mock-metric-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 4px;
+    }
+    .mock-metric-sub {
+      font-size: 10px;
+      color: #10b981;
+      margin-top: 2px;
+    }
+
+    .mock-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+    .mock-table th {
+      padding: 8px 10px;
+      border-bottom: 1px solid #1f293d;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .mock-table td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #e2e8f0;
+    }
+
+    .badge-paid {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 10px;
+    }
+
+    .badge-posted {
+      background: rgba(14, 165, 233, 0.15);
+      color: #0ea5e9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 10px;
+    }
+
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Studio Header -->
+  <header class="studio-header">
+    <a href="/" class="brand-badge">
+      <svg class="logo-icon" viewBox="0 0 32 32" fill="none">
+        <path d="M16 4.5a11.5 11.5 0 1 1-10.4 6.6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        <path d="M4.2 5.4v6.4h6.4" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16" cy="16" r="4.2" fill="currentColor"/>
+      </svg>
+      <span class="brand-title">Brightloop <span class="brand-tag">Walkthrough Video</span></span>
+    </a>
+
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="voiceToggleBtn" onclick="toggleVoice()">
+        <span id="voiceIcon">🔊</span> <span id="voiceLabel">Voiceover: ON</span>
+      </button>
+      <a href="/auth" class="btn btn-primary" target="_blank">
+        Launch Live Back Office →
+      </a>
+    </div>
+  </header>
+
+  <!-- Video Stage -->
+  <main class="stage-container">
+    
+    <!-- Left Stage: Video Canvas & Controls -->
+    <div class="viewport">
+      <div class="screen-canvas">
+        <div class="screen-glow"></div>
+
+        <!-- Slide Frame -->
+        <div class="slide-wrapper" id="slideFrame">
+          <div class="slide-header">
+            <div class="window-dots">
+              <div class="dot dot-red"></div>
+              <div class="dot dot-yellow"></div>
+              <div class="dot dot-green"></div>
+            </div>
+            <div class="window-title" id="windowTitle">brightloop.io — Platform Walkthrough</div>
+            <div style="width: 40px;"></div>
+          </div>
+
+          <div class="slide-body" id="slideBody">
+            <!-- Dynamic Content injected via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-time Voiceover Captions -->
+      <div class="captions-bar">
+        <div class="voice-indicator" id="voiceIndicator"></div>
+        <div class="caption-text" id="captionText">Initializing Brightloop video presentation with automated voiceover...</div>
+      </div>
+
+      <!-- Video Timeline & Controls -->
+      <div class="player-controls">
+        <div class="progress-bar-container" id="progressTrack" onclick="handleTrackClick(event)">
+          <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+
+        <div class="controls-row">
+          <div class="btn-group">
+            <button class="control-btn" onclick="prevChapter()" title="Previous Chapter">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="Play / Pause">
+              <svg id="playIcon" width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="control-btn" onclick="nextChapter()" title="Next Chapter">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <button class="control-btn" onclick="restartPresentation()" title="Restart Video">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </button>
+          </div>
+
+          <div class="time-readout">
+            <span id="currentTime">00:00</span> / <span id="totalTime">04:30</span>
+          </div>
+
+          <div class="btn-group">
+            <button class="control-btn" id="speedBtn" onclick="cycleSpeed()" title="Playback Speed">1.0x</button>
+            <button class="control-btn" onclick="toggleFullscreen()" title="Fullscreen">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Stage: Playlist & Chapters -->
+    <aside class="playlist-sidebar">
+      <div class="playlist-header">
+        <span class="playlist-title">Presentation Chapters</span>
+        <span class="brand-tag" id="chapterCount">9 Parts</span>
+      </div>
+
+      <ul class="chapter-list" id="chapterList">
+        <!-- Rendered by JS -->
+      </ul>
+    </aside>
+
+  </main>
+
+  <script>
+    const CHAPTERS = [
+      {
+        id: "intro",
+        title: "1. Introduction to Brightloop",
+        duration: 25,
+        heading: "Enterprise Recurring Billing & Subscription Engine",
+        desc: "Brightloop is a full-stack platform built on React 19, Express, and a relational MySQL datastore with zero-downtime memory fallback. It automates recurring billing, quotations, invoicing, and customer self-service.",
+        voiceScript: "Welcome to the official Brightloop platform walkthrough. Brightloop is a modern recurring billing and subscription management platform built for SaaS and high-volume digital businesses. It features an Express backend, relational MySQL database persistence, automated billing runs, and a complete invoicing engine with direct PDF printing and sharing.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <div class="mock-metric-grid">
+              <div class="mock-metric">
+                <div class="mock-metric-lbl">Architecture</div>
+                <div class="mock-metric-val" style="color: #0ea5e9;">React 19 + Express</div>
+                <div class="mock-metric-sub">Tailwind CSS v4 + TypeScript</div>
+              </div>
+              <div class="mock-metric">
+                <div class="mock-metric-lbl">Datastore</div>
+                <div class="mock-metric-val" style="color: #14b8a6;">MySQL 8.0</div>
+                <div class="mock-metric-sub">Auto In-Memory Fallback</div>
+              </div>
+              <div class="mock-metric">
+                <div class="mock-metric-lbl">Invoicing Engine</div>
+                <div class="mock-metric-val" style="color: #10b981;">Tax PDF & Share</div>
+                <div class="mock-metric-sub">WhatsApp + Email + Public Link</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 13px; color: #94a3b8; line-height: 1.6;">
+            <strong>Highlights:</strong> Role-based access control, automated dunning schedules, GST 18% compliance, integer paise precision math, and a dedicated Customer Portal.
+          </div>
+        `
+      },
+      {
+        id: "auth",
+        title: "2. Role-Based Login & Portals",
+        duration: 30,
+        heading: "Strict Multi-Role Security & Fast Demo Switching",
+        desc: "Brightloop segregates administrative back-office operations from customer self-service accounts. Pre-configured demo logins allow instant 1-click authentication.",
+        voiceScript: "Let's explore user authentication. Brightloop provides clear role segregation between Back Office staff and subscribers. You can sign in as an Admin at admin@brightloop.io, as Operations Staff at staff@brightloop.io, or access the Customer Portal as Arjun Verma or Neha Sharma. The unified auth page includes one-click credentials for instant testing.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div style="background: #111827; border: 1px solid #1f293d; border-radius: 8px; padding: 14px;">
+                <div style="font-size: 11px; color: #14b8a6; font-weight: 700; text-transform: uppercase;">Back Office Portal</div>
+                <div style="font-size: 14px; font-weight: 700; color: #fff; margin-top: 4px;">admin@brightloop.io</div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Role: System Admin & Staff</div>
+                <div style="margin-top: 10px; font-size: 11px; color: #64748b;">Password: <code>Password123!</code></div>
+              </div>
+              <div style="background: #111827; border: 1px solid #1f293d; border-radius: 8px; padding: 14px;">
+                <div style="font-size: 11px; color: #0ea5e9; font-weight: 700; text-transform: uppercase;">Customer Portal</div>
+                <div style="font-size: 14px; font-weight: 700; color: #fff; margin-top: 4px;">arjun@apexlogistics.in</div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Role: Customer Subscriber</div>
+                <div style="margin-top: 10px; font-size: 11px; color: #64748b;">Password: <code>Password123!</code></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 13px; color: #94a3b8;">
+            Direct administrative gateway available at <code>/admin-login</code> for dedicated staff verification.
+          </div>
+        `
+      },
+      {
+        id: "dashboard",
+        title: "3. Back Office Financial Dashboard",
+        duration: 30,
+        heading: "Live MRR, Revenue Analytics & Subscriber Health",
+        desc: "The Back Office provides financial transparency with Monthly Recurring Revenue (MRR), ARR, Net Revenue, Active Subscribers, and churn metrics in real-time.",
+        voiceScript: "Upon signing into the Back Office, staff are greeted with real-time financial telemetry. Key metrics include Monthly Recurring Revenue calculated to the exact paise, Annual Recurring Revenue, Net Collections, and customer retention metrics. Interactive charts display invoice collection volume across billing cycles.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <div class="mock-metric-grid" style="margin-bottom: 14px;">
+              <div class="mock-metric">
+                <div class="mock-metric-lbl">Monthly Recurring Revenue</div>
+                <div class="mock-metric-val" style="color: #10b981;">₹22,997.00</div>
+                <div class="mock-metric-sub">+18.4% vs last period</div>
+              </div>
+              <div class="mock-metric">
+                <div class="mock-metric-lbl">Active Subscriptions</div>
+                <div class="mock-metric-val">3 Accounts</div>
+                <div class="mock-metric-sub">100% renewal rate</div>
+              </div>
+              <div class="mock-metric">
+                <div class="mock-metric-lbl">Net Revenue Collected</div>
+                <div class="mock-metric-val" style="color: #0ea5e9;">₹68,991.00</div>
+                <div class="mock-metric-sub">Zero failed debits</div>
+              </div>
+            </div>
+            <div style="background: #111827; border: 1px solid #1f293d; border-radius: 8px; padding: 12px; height: 100px; display: flex; align-items: flex-end; gap: 8px;">
+              <div style="background: #14b8a6; height: 45%; flex: 1; border-radius: 4px;"></div>
+              <div style="background: #14b8a6; height: 60%; flex: 1; border-radius: 4px;"></div>
+              <div style="background: #14b8a6; height: 50%; flex: 1; border-radius: 4px;"></div>
+              <div style="background: #14b8a6; height: 80%; flex: 1; border-radius: 4px;"></div>
+              <div style="background: #14b8a6; height: 70%; flex: 1; border-radius: 4px;"></div>
+              <div style="background: #0ea5e9; height: 95%; flex: 1; border-radius: 4px;"></div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: "billing",
+        title: "4. Automated Billing Runs & Dunning",
+        duration: 30,
+        heading: "Idempotent Scheduled Invoicing Engine",
+        desc: "Brightloop eliminates duplicate billing with deterministic idempotency keys per period. Operations staff can preview upcoming runs and trigger batch invoice generation.",
+        voiceScript: "In section four, we look at the Billing Runs engine. Subscription billing operates on an idempotent calendar math model based in the Asia Kolkata timezone. Each billing run processes active subscribers, generates draft or posted invoices, applies discounts, calculates GST, and maintains a strict execution history.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 700; color: #fff;">Recent Billing Runs</span>
+              <span class="pill-btn" style="background: #0d9488; border-color: #14b8a6; color: #fff;">⚡ Trigger Billing Run</span>
+            </div>
+            <table class="mock-table">
+              <thead>
+                <tr><th>Run Date</th><th>Trigger</th><th>Processed</th><th>Invoices Created</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Today</td><td>Manual Admin</td><td>3 Subscriptions</td><td>3 Invoices</td><td><span class="badge-paid">SUCCEEDED</span></td></tr>
+                <tr><td>Yesterday</td><td>Automated Cron</td><td>3 Subscriptions</td><td>3 Invoices</td><td><span class="badge-paid">SUCCEEDED</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        `
+      },
+      {
+        id: "subscriptions",
+        title: "5. Subscription Lifecycle & Wizard",
+        duration: 30,
+        heading: "Multi-Tier Plans, Proration & Creation Wizard",
+        desc: "Easily transition customers between tiers (Starter, Growth Pro, Enterprise). Use the guided subscription wizard to assign billing intervals, trial days, and tax overrides.",
+        voiceScript: "Subscription lifecycle management is seamless. Staff can view active, past-due, and trialling subscribers with clear renewal dates. The guided New Subscription wizard lets you pick a customer, choose a catalog plan, apply custom line-item discounts, configure trial days, and activate immediately.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <table class="mock-table">
+              <thead>
+                <tr><th>Customer</th><th>Plan</th><th>Interval</th><th>Price</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Apex Logistics Ltd</strong></td><td>Growth Pro</td><td>Monthly</td><td>₹7,999.00</td><td><span class="badge-paid">ACTIVE</span></td></tr>
+                <tr><td><strong>Zenith Technologies</strong></td><td>Growth Pro</td><td>Monthly</td><td>₹7,999.00</td><td><span class="badge-paid">ACTIVE</span></td></tr>
+                <tr><td><strong>BlueWave Media</strong></td><td>Starter Tier</td><td>Monthly</td><td>₹2,999.00</td><td><span class="badge-paid">ACTIVE</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        `
+      },
+      {
+        id: "invoices",
+        title: "6. Invoice Management & Tax Status",
+        duration: 35,
+        heading: "Comprehensive Tax Invoicing with Print & Share",
+        desc: "Track invoices through their lifecycle: Draft → Posted → Paid → Void. Each row features 1-click Quick Print and Multi-Channel Direct Share actions.",
+        voiceScript: "Invoicing is at the heart of Brightloop. The back office invoice table provides real-time status tracking, due dates, customer snapshots, and payment recording. Most importantly, every row features dedicated Quick Print and Direct Share buttons, allowing staff to print official Tax Invoices or send them straight to customers.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <table class="mock-table">
+              <thead>
+                <tr><th>Invoice #</th><th>Customer</th><th>Total (INR)</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>INV-2026-0001</strong></td>
+                  <td>Apex Logistics Ltd</td>
+                  <td>₹9,438.82</td>
+                  <td><span class="badge-paid">PAID</span></td>
+                  <td>
+                    <span class="pill-btn">🖨️ Print</span>
+                    <span class="pill-btn">↗️ Share</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>INV-2026-0002</strong></td>
+                  <td>Zenith Technologies</td>
+                  <td>₹9,438.82</td>
+                  <td><span class="badge-posted">CONFIRMED</span></td>
+                  <td>
+                    <span class="pill-btn">🖨️ Print</span>
+                    <span class="pill-btn">↗️ Share</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `
+      },
+      {
+        id: "print-share",
+        title: "7. Direct PDF Print & Multi-Channel Sharing",
+        duration: 35,
+        heading: "1-Click PDF Generation, WhatsApp & Public URL",
+        desc: "Print compliant A4 Tax Invoices directly from the browser without third-party PDF services. Share instantly via WhatsApp, Email, or standalone public links.",
+        voiceScript: "Let's examine the instant print and sharing engine. Clicking Print opens an official Tax Invoice document formatted with legal GST details, line item breakdowns, and bank remittance instructions. The browser print stylesheet guarantees a clean output. Furthermore, the Direct Share dialog lets you send the invoice via WhatsApp, Email, or copy a public link.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px;">
+              <div style="background: #ffffff; color: #1e293b; border-radius: 6px; padding: 12px; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 6px;">
+                  <strong style="color: #0f766e;">TAX INVOICE</strong>
+                  <span>INV-2026-0001</span>
+                </div>
+                <div><strong>Brightloop Technologies Pvt. Ltd.</strong></div>
+                <div style="font-size: 10px; color: #64748b;">GSTIN: 27AABCB1515L1Z2</div>
+                <div style="margin-top: 8px; font-size: 10px; background: #f8fafc; padding: 4px;">
+                  Customer: Apex Logistics Ltd<br>
+                  Line: Growth Pro - Monthly (₹7,999.00)<br>
+                  GST (18%): ₹1,439.82 · Total: <strong>₹9,438.82</strong>
+                </div>
+              </div>
+              <div style="background: #111827; border: 1px solid #1f293d; border-radius: 6px; padding: 12px; font-size: 11px;">
+                <div style="font-weight: 700; color: #fff; margin-bottom: 8px;">Direct Sharing Channels:</div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <div class="pill-btn" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3);">
+                    💬 Share via WhatsApp
+                  </div>
+                  <div class="pill-btn" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9; border-color: rgba(14, 165, 233, 0.3);">
+                    ✉️ Share via Email
+                  </div>
+                  <div class="pill-btn">
+                    🔗 Copy Public Link (/invoice/view/:id)
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: "portal",
+        title: "8. Customer Self-Service Portal",
+        duration: 30,
+        heading: "Transparent Billing & Invoices for Subscribers",
+        desc: "Customers log in to view active subscription details, renewal dates, past invoice histories, and download tax statements independently.",
+        voiceScript: "In chapter eight, we view the subscriber experience. When customer Arjun Verma logs into the Customer Portal, he can review his active Growth Pro subscription, see when his next invoice will be issued, download official receipts, and share payment confirmations directly.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div>
+                <div style="font-size: 14px; font-weight: 700; color: #fff;">Apex Logistics Ltd</div>
+                <div style="font-size: 11px; color: #94a3b8;">Customer Portal · GSTIN: 27AABCU9603R1ZM</div>
+              </div>
+              <span class="badge-paid">ACTIVE SUBSCRIBER</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div style="background: #111827; border: 1px solid #1f293d; border-radius: 6px; padding: 12px;">
+                <div style="font-size: 11px; color: #94a3b8;">Current Plan</div>
+                <div style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px;">Growth Pro</div>
+                <div style="font-size: 11px; color: #10b981; margin-top: 2px;">Renews automatically</div>
+              </div>
+              <div style="background: #111827; border: 1px solid #1f293d; border-radius: 6px; padding: 12px;">
+                <div style="font-size: 11px; color: #94a3b8;">Outstanding Balance</div>
+                <div style="font-size: 16px; font-weight: 700; color: #10b981; margin-top: 2px;">₹0.00 Due</div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">All invoices settled</div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: "summary",
+        title: "9. MySQL Architecture & Test Suite",
+        duration: 25,
+        heading: "Robust Enterprise Reliability & 100% Test Pass Rate",
+        desc: "Brightloop combines MySQL relational schemas, resilient in-memory development fallback, and a 28-point integration test suite verifying every critical workflow.",
+        voiceScript: "In conclusion, Brightloop delivers production-grade recurring subscription management. Backed by a clean MySQL relational database, zero-downtime developer fallback, and a passing 28-point automated test suite, Brightloop is ready for modern digital business operations. Thank you for watching.",
+        renderContent: () => `
+          <div class="showcase-area">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 14px; font-weight: 700; color: #10b981;">✓ 28 / 28 Automated Integration Tests Passing</span>
+              <span class="brand-tag">Production Ready</span>
+            </div>
+            <div style="background: #0f172a; border-radius: 6px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8; line-height: 1.6;">
+              [PASS] Admin authentication & JWT token generation<br>
+              [PASS] MRR analytics & overview chart telemetry<br>
+              [PASS] Idempotent billing runs with job state capture<br>
+              [PASS] Invoice lifecycle: Draft → Posted → Paid<br>
+              [PASS] Customer & staff role isolation verified<br>
+              [PASS] Customer portal subscriptions & invoice history
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 10px;">
+            <a href="/auth" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">
+              Explore the Brightloop Back Office Now →
+            </a>
+          </div>
+        `
+      }
+    ];
+
+    let currentChapterIndex = 0;
+    let isPlaying = false;
+    let voiceEnabled = true;
+    let playbackSpeed = 1.0;
+    let chapterTimer = null;
+    let elapsedSeconds = 0;
+    let totalDuration = CHAPTERS.reduce((sum, ch) => sum + ch.duration, 0);
+
+    // Audio synthesizer
+    const synth = window.speechSynthesis;
+    let selectedVoice = null;
+
+    function initVoices() {
+      if (!synth) return;
+      const voices = synth.getVoices();
+      // Prefer modern natural English voices
+      selectedVoice = voices.find(v => v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Zira") || v.name.includes("David"))) || voices.find(v => v.lang.startsWith("en")) || voices[0];
+    }
+    if (synth && synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = initVoices;
+    }
+    initVoices();
+
+    // Sound effect on transitions
+    function playChime() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } catch (e) {
+        // audio context blocked or not supported
+      }
+    }
+
+    function renderPlaylist() {
+      const listEl = document.getElementById("chapterList");
+      listEl.innerHTML = "";
+      CHAPTERS.forEach((ch, idx) => {
+        const li = document.createElement("li");
+        li.className = `chapter-item ${idx === currentChapterIndex ? "active" : ""}`;
+        li.onclick = () => jumpToChapter(idx);
+        li.innerHTML = `
+          <div class="chapter-number">${String(idx + 1).padStart(2, '0')}</div>
+          <div class="chapter-info">
+            <h4>${ch.title}</h4>
+            <p>${ch.desc.slice(0, 55)}...</p>
+          </div>
+        `;
+        listEl.appendChild(li);
+      });
+      document.getElementById("chapterCount").innerText = `${CHAPTERS.length} Chapters`;
+      document.getElementById("totalTime").innerText = formatTime(totalDuration);
+    }
+
+    function renderSlide(index) {
+      const ch = CHAPTERS[index];
+      const bodyEl = document.getElementById("slideBody");
+      document.getElementById("windowTitle").innerText = `brightloop.io — ${ch.title}`;
+
+      bodyEl.innerHTML = `
+        <div>
+          <div class="slide-badge-row">
+            <span class="chapter-tag">Chapter ${index + 1} of ${CHAPTERS.length}</span>
+            <span class="time-badge">${ch.duration}s overview</span>
+          </div>
+          <h2 class="slide-heading">${ch.heading}</h2>
+          <p class="slide-desc">${ch.desc}</p>
+        </div>
+        ${ch.renderContent()}
+      `;
+
+      updateCaptions(ch.voiceScript);
+      renderPlaylist();
+      updateProgressBar();
+
+      if (voiceEnabled && isPlaying) {
+        speakScript(ch.voiceScript, () => {
+          if (isPlaying) {
+            nextChapter();
+          }
+        });
+      }
+    }
+
+    function speakScript(text, onComplete) {
+      if (!synth || !voiceEnabled) {
+        // Fallback timer if speech synthesis is disabled
+        clearTimeout(chapterTimer);
+        chapterTimer = setTimeout(() => {
+          if (onComplete) onComplete();
+        }, CHAPTERS[currentChapterIndex].duration * 1000 / playbackSpeed);
+        return;
+      }
+
+      synth.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (selectedVoice) utterance.voice = selectedVoice;
+      utterance.rate = playbackSpeed;
+      utterance.pitch = 1.0;
+
+      const indicator = document.getElementById("voiceIndicator");
+      indicator.classList.add("speaking");
+
+      utterance.onend = () => {
+        indicator.classList.remove("speaking");
+        if (onComplete) onComplete();
+      };
+
+      utterance.onerror = () => {
+        indicator.classList.remove("speaking");
+        if (onComplete) onComplete();
+      };
+
+      synth.speak(utterance);
+    }
+
+    function updateCaptions(text) {
+      document.getElementById("captionText").innerText = text;
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      const playIcon = document.getElementById("playIcon");
+      if (isPlaying) {
+        playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+        playChime();
+        renderSlide(currentChapterIndex);
+      } else {
+        playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        if (synth) synth.cancel();
+        clearTimeout(chapterTimer);
+        document.getElementById("voiceIndicator").classList.remove("speaking");
+      }
+    }
+
+    function nextChapter() {
+      if (currentChapterIndex < CHAPTERS.length - 1) {
+        currentChapterIndex++;
+        playChime();
+        renderSlide(currentChapterIndex);
+      } else {
+        // Finished
+        isPlaying = false;
+        document.getElementById("playIcon").innerHTML = '<path d="M8 5v14l11-7z"/>';
+        if (synth) synth.cancel();
+        updateCaptions("Walkthrough complete! Click restart or jump to any chapter.");
+      }
+    }
+
+    function prevChapter() {
+      if (currentChapterIndex > 0) {
+        currentChapterIndex--;
+        playChime();
+        renderSlide(currentChapterIndex);
+      }
+    }
+
+    function jumpToChapter(index) {
+      currentChapterIndex = index;
+      playChime();
+      renderSlide(currentChapterIndex);
+      if (!isPlaying) {
+        togglePlay();
+      }
+    }
+
+    function restartPresentation() {
+      currentChapterIndex = 0;
+      elapsedSeconds = 0;
+      if (!isPlaying) togglePlay();
+      else renderSlide(0);
+    }
+
+    function toggleVoice() {
+      voiceEnabled = !voiceEnabled;
+      const lbl = document.getElementById("voiceLabel");
+      const icon = document.getElementById("voiceIcon");
+      if (voiceEnabled) {
+        lbl.innerText = "Voiceover: ON";
+        icon.innerText = "🔊";
+        if (isPlaying) {
+          speakScript(CHAPTERS[currentChapterIndex].voiceScript, () => nextChapter());
+        }
+      } else {
+        lbl.innerText = "Voiceover: OFF";
+        icon.innerText = "🔇";
+        if (synth) synth.cancel();
+        document.getElementById("voiceIndicator").classList.remove("speaking");
+      }
+    }
+
+    function cycleSpeed() {
+      if (playbackSpeed === 1.0) playbackSpeed = 1.25;
+      else if (playbackSpeed === 1.25) playbackSpeed = 1.5;
+      else playbackSpeed = 1.0;
+      document.getElementById("speedBtn").innerText = `${playbackSpeed}x`;
+      if (isPlaying) {
+        renderSlide(currentChapterIndex);
+      }
+    }
+
+    function updateProgressBar() {
+      let cumulativeTime = 0;
+      for (let i = 0; i < currentChapterIndex; i++) {
+        cumulativeTime += CHAPTERS[i].duration;
+      }
+      const pct = (cumulativeTime / totalDuration) * 100;
+      document.getElementById("progressBar").style.width = `${pct}%`;
+      document.getElementById("currentTime").innerText = formatTime(cumulativeTime);
+    }
+
+    function handleTrackClick(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickRatio = (e.clientX - rect.left) / rect.width;
+      const targetTime = clickRatio * totalDuration;
+
+      let acc = 0;
+      for (let i = 0; i < CHAPTERS.length; i++) {
+        acc += CHAPTERS[i].duration;
+        if (targetTime <= acc) {
+          jumpToChapter(i);
+          break;
+        }
+      }
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // Initialize presentation on load
+    window.addEventListener("DOMContentLoaded", () => {
+      renderPlaylist();
+      renderSlide(0);
+    });
+  </script>
+</body>
+</html>
