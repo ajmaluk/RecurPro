@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
 import { Boxes, Layers, Plus } from "lucide-react";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import {
@@ -135,7 +134,7 @@ export default function Catalog() {
   );
 }
 
-type ProductRow = Doc<"products"> & {
+type ProductRow = Omit<Doc<"products">, "costPrice"> & {
   costPrice: number | null;
   margin: number | null;
   taxNames: string[];

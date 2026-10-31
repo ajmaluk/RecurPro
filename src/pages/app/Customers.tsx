@@ -34,7 +34,7 @@ export default function Customers() {
   const { results, status, loadMore, isLoading } = usePaginatedQuery(
     api.customers.list,
     { q: query || undefined },
-    { numItems: 20 },
+    { initialNumItems: 20 },
   );
 
   return (
@@ -127,7 +127,7 @@ export default function Customers() {
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
           <span>{status === "LoadingMore" ? "Loading…" : `${results.length} shown`}</span>
           {status === "CanLoadMore" ? (
-            <Button variant="outline" size="sm" onClick={loadMore}>
+            <Button variant="outline" size="sm" onClick={() => loadMore(20)}>
               Load more
             </Button>
           ) : null}
@@ -242,12 +242,12 @@ export function CustomerDetailPage() {
   const subscriptions = usePaginatedQuery(
     api.subscriptions.list,
     { customerId },
-    { numItems: 10 },
+    { initialNumItems: 10 },
   );
   const invoices = usePaginatedQuery(
     api.invoices.list,
     { customerId },
-    { numItems: 10 },
+    { initialNumItems: 10 },
   );
 
   if (!detail) return <LoadingBlock label="Loading customer…" />;

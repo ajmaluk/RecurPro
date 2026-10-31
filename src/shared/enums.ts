@@ -6,6 +6,7 @@
 export const ROLES = {
   ADMIN: "admin",
   INTERNAL: "internal",
+  STAFF: "staff",
   CUSTOMER: "customer",
 } as const;
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -13,11 +14,12 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Admin",
   internal: "Staff",
+  staff: "Staff",
   customer: "Customer",
 };
 
 /** Staff roles may work in the back office; customers only see the portal. */
-export const STAFF_ROLES: Role[] = [ROLES.ADMIN, ROLES.INTERNAL];
+export const STAFF_ROLES: Role[] = [ROLES.ADMIN, ROLES.INTERNAL, ROLES.STAFF];
 
 export const SUBSCRIPTION_STATUSES = [
   "DRAFT",

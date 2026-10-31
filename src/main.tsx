@@ -1,42 +1,45 @@
+/* eslint-disable react-refresh/only-export-components */
 import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
-import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
-import { ConvexAuthProvider } from "@convex-dev/auth/react";
-import { ConvexReactClient } from "convex/react";
+import { VlyToolbar } from "../vly-toolbar-readonly";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router";
 import "./index.css";
 
 // Lazy load route components for better code splitting
-const Landing = lazy(() => import("./pages/Landing.tsx"));
-const AuthPage = lazy(() => import("./pages/Auth.tsx"));
-const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const Landing = lazy(() => import("./pages/Landing"));
+const AuthPage = lazy(() => import("./pages/Auth"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Staff back office (/app)
 const AppShell = lazy(() => import("./components/app/AppShell").then((m) => ({ default: m.AppShell })));
-const Dashboard = lazy(() => import("./pages/app/Dashboard.tsx"));
-const Billing = lazy(() => import("./pages/app/Billing.tsx"));
-const Invoices = lazy(() => import("./pages/app/Invoices.tsx"));
-const InvoiceDetail = lazy(() => import("./pages/app/Invoices.tsx").then((m) => ({ default: m.InvoiceDetailPage })));
-const Subscriptions = lazy(() => import("./pages/app/Subscriptions.tsx"));
-const SubscriptionDetail = lazy(() => import("./pages/app/Subscriptions.tsx").then((m) => ({ default: m.SubscriptionDetailPage })));
-const SubscriptionNew = lazy(() => import("./pages/app/Subscriptions.tsx").then((m) => ({ default: m.NewSubscriptionPage })));
-const Customers = lazy(() => import("./pages/app/Customers.tsx"));
-const CustomerDetail = lazy(() => import("./pages/app/Customers.tsx").then((m) => ({ default: m.CustomerDetailPage })));
-const Catalog = lazy(() => import("./pages/app/Catalog.tsx"));
-const Plans = lazy(() => import("./pages/app/Plans.tsx"));
-const Reports = lazy(() => import("./pages/app/Reports.tsx"));
-const Admin = lazy(() => import("./pages/app/Admin.tsx"));
-const Account = lazy(() => import("./pages/Account.tsx"));
+const Dashboard = lazy(() => import("./pages/app/Dashboard"));
+const Billing = lazy(() => import("./pages/app/Billing"));
+const Invoices = lazy(() => import("./pages/app/Invoices"));
+const InvoiceDetail = lazy(() => import("./pages/app/Invoices").then((m) => ({ default: m.InvoiceDetailPage })));
+const Subscriptions = lazy(() => import("./pages/app/Subscriptions"));
+const SubscriptionDetail = lazy(() => import("./pages/app/Subscriptions").then((m) => ({ default: m.SubscriptionDetailPage })));
+const SubscriptionNew = lazy(() => import("./pages/app/Subscriptions").then((m) => ({ default: m.NewSubscriptionPage })));
+const Customers = lazy(() => import("./pages/app/Customers"));
+const CustomerDetail = lazy(() => import("./pages/app/Customers").then((m) => ({ default: m.CustomerDetailPage })));
+const Catalog = lazy(() => import("./pages/app/Catalog"));
+const Plans = lazy(() => import("./pages/app/Plans"));
+const Reports = lazy(() => import("./pages/app/Reports"));
+const Admin = lazy(() => import("./pages/app/Admin"));
+const Account = lazy(() => import("./pages/Account"));
 
 // Customer portal (/portal)
 const PortalShell = lazy(() => import("./components/portal/PortalShell").then((m) => ({ default: m.PortalShell })));
-const PortalDashboard = lazy(() => import("./pages/portal/Dashboard.tsx"));
-const PortalSubscriptions = lazy(() => import("./pages/portal/Subscriptions.tsx"));
-const PortalInvoices = lazy(() => import("./pages/portal/Invoices.tsx"));
-const PortalInvoiceDetail = lazy(() => import("./pages/portal/Invoices.tsx").then((m) => ({ default: m.PortalInvoiceDetailPage })));
+const PortalDashboard = lazy(() => import("./pages/portal/Dashboard"));
+const PortalSubscriptions = lazy(() => import("./pages/portal/Subscriptions"));
+const PortalInvoices = lazy(() => import("./pages/portal/Invoices"));
+const PortalInvoiceDetail = lazy(() => import("./pages/portal/Invoices").then((m) => ({ default: m.PortalInvoiceDetailPage })));
+const PublicInvoiceView = lazy(() => import("./pages/PublicInvoiceView"));
+
+import { useAuth } from "@/hooks/use-auth";
 
 // Simple loading fallback for route transitions
 function RouteLoading() {
@@ -45,6 +48,14 @@ function RouteLoading() {
       <div className="animate-pulse text-muted-foreground">Loading...</div>
     </div>
   );
+}
+
+function SmartDashboardRedirect() {
+  const { isLoading, isAuthenticated, user } = useAuth();
+  if (isLoading) return <RouteLoading />;
+  if (!isAuthenticated || !user) return <Navigate to="/admin/login" replace />;
+  if (user.role === "customer") return <Navigate to="/portal" replace />;
+  return <Navigate to="/app" replace />;
 }
 
 /** Silent error boundary — if VlyToolbar crashes it renders nothing instead of
@@ -103,10 +114,6 @@ class RootErrorBoundary extends React.Component<
   }
 }
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
-
-
-
 function RouteSyncer() {
   const location = useLocation();
   useEffect(() => {
@@ -131,31 +138,44 @@ function RouteSyncer() {
 }
 
 
+import { AuthProvider } from "@/hooks/use-auth";
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RootErrorBoundary>
       <ToolbarErrorBoundary>
         <VlyToolbar />
       </ToolbarErrorBoundary>
-      <ConvexAuthProvider client={convex}>
-        <BrowserRouter>
+      <AuthProvider>
+          <BrowserRouter>
           <RouteSyncer />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route
                 path="/auth"
-                element={<AuthPage redirectAfterAuth="/app" />}
+                element={<AuthPage />}
               />
-              {/* Legacy template route */}
-              <Route path="/dashboard" element={<Navigate to="/app" replace />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin-login" element={<Navigate to="/admin/login" replace />} />
+              <Route path="/portal/login" element={<AuthPage redirectAfterAuth="/portal" />} />
+              <Route path="/customer-login" element={<Navigate to="/portal/login" replace />} />
+
+              {/* Secure dashboard redirect */}
+              <Route path="/dashboard" element={<SmartDashboardRedirect />} />
+
+              {/* Public/Shareable invoice route */}
+              <Route path="/invoice/view/:id" element={<PublicInvoiceView />} />
 
               <Route
                 path="/app"
                 element={
                   <RequireAuth
                     title="Sign in to the back office"
-                    description="The Brightloop back office is for staff and admin accounts."
+                    description="The RecurPro back office is for staff and admin accounts."
+                    allowedRoles={["admin", "staff"]}
+                    loginPath="/admin/login"
+                    redirectImmediately={true}
                   >
                     <AppShell>
                       <Outlet />
@@ -175,7 +195,19 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="catalog" element={<Catalog />} />
                 <Route path="plans" element={<Plans />} />
                 <Route path="reports" element={<Reports />} />
-                <Route path="admin" element={<Admin />} />
+                <Route
+                  path="admin"
+                  element={
+                    <RequireAuth
+                      allowedRoles={["admin"]}
+                      title="Admin access required"
+                      description="Only users with the Administrator role can access this section."
+                      redirectImmediately={false}
+                    >
+                      <Admin />
+                    </RequireAuth>
+                  }
+                />
                 <Route path="account" element={<Account />} />
               </Route>
 
@@ -185,6 +217,9 @@ createRoot(document.getElementById("root")!).render(
                   <RequireAuth
                     title="Sign in to your portal"
                     description="Your subscriptions and invoices live behind your own login."
+                    allowedRoles={["customer", "admin", "staff"]}
+                    loginPath="/portal/login"
+                    redirectImmediately={true}
                   >
                     <PortalShell>
                       <Outlet />
@@ -204,7 +239,7 @@ createRoot(document.getElementById("root")!).render(
           </Suspense>
         </BrowserRouter>
         <Toaster />
-      </ConvexAuthProvider>
+      </AuthProvider>
     </RootErrorBoundary>
   </StrictMode>,
 );

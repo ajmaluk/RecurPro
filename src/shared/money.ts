@@ -1,7 +1,7 @@
 /**
  * Money utilities.
  *
- * Every monetary value in Brightloop is an **integer number of paise**.
+ * Every monetary value in RecurPro is an **integer number of paise**.
  * Floats never touch a total: forms collect rupees (possibly with decimals),
  * the UI converts to paise before sending, and every calculation below is
  * integer-in / integer-out. Percentages are stored as basis points (18% = 1800).
@@ -95,3 +95,50 @@ export function normalizeToMonthly(
 
 /** Human input for money fields: rupees with up to two decimals. */
 export const MONEY_INPUT_PATTERN = /^\d+(\.\d{1,2})?$/;
+
+/** Convert paise amount to words in Indian Rupees format (Crores, Lakhs, Thousands). */
+export function amountInWords(paise: number): string {
+  const rupees = Math.floor(Math.abs(paise) / PAISE_PER_RUPEE);
+  if (rupees === 0) return "Zero Rupees Only";
+
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen",
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  function convertTwoDigits(n: number): string {
+    if (n < 20) return ones[n];
+    const t = Math.floor(n / 10);
+    const o = n % 10;
+    return tens[t] + (o ? " " + ones[o] : "");
+  }
+
+  function convertThreeDigits(n: number): string {
+    const h = Math.floor(n / 100);
+    const rem = n % 100;
+    let res = "";
+    if (h > 0) res += ones[h] + " Hundred";
+    if (rem > 0) res += (res ? " " : "") + convertTwoDigits(rem);
+    return res;
+  }
+
+  let rem = rupees;
+  let words = "";
+
+  const crore = Math.floor(rem / 10000000);
+  rem %= 10000000;
+  if (crore > 0) words += convertThreeDigits(crore) + " Crore ";
+
+  const lakh = Math.floor(rem / 100000);
+  rem %= 100000;
+  if (lakh > 0) words += convertTwoDigits(lakh) + " Lakh ";
+
+  const thousand = Math.floor(rem / 1000);
+  rem %= 1000;
+  if (thousand > 0) words += convertTwoDigits(thousand) + " Thousand ";
+
+  if (rem > 0) words += convertThreeDigits(rem);
+
+  return words.trim() + " Rupees Only";
+}

@@ -19,7 +19,7 @@ import { action, internalMutation, internalQuery, query } from "./_generated/ser
 import type { MutationCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import { nextSequenceValue, requireAdmin, today } from "./lib/authz";
+import { nextSequenceValue, today } from "./lib/authz";
 import { nextPeriodStart } from "../shared/periods";
 import { ROLES } from "../shared/enums";
 import { emailSchema, parseOrThrow, passwordSchema } from "../shared/validation";
@@ -110,8 +110,8 @@ export const seedDemo = action({
       await ctx.runQuery(internal.staff.requireAdminSelf);
     } else {
       const credentials = parseOrThrow(seedArgsSchema, {
-        adminName: args.adminName?.trim() || "Brightloop Admin",
-        adminEmail: args.adminEmail || "admin@brightloop.in",
+        adminName: args.adminName?.trim() || "RecurPro Admin",
+        adminEmail: args.adminEmail || "admin@recurpro.io",
         adminPassword: args.adminPassword || "Admin@2026",
       });
       await createAccount(ctx, {
@@ -228,7 +228,7 @@ export const apply = internalMutation({
 
     /* -------------------------------- plans ----------------------------- */
 
-    const dailyPlan = await ctx.db.insert("plans", {
+    const _dailyPlan = await ctx.db.insert("plans", {
       name: "Daily Pass",
       price: 4900,
       billingPeriod: "DAILY",

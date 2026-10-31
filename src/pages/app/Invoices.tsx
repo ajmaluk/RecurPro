@@ -8,9 +8,13 @@ import {
   CheckCircle2,
   CreditCard,
   Download,
+  FileText,
   Printer,
   Search,
+  Share2,
 } from "lucide-react";
+import { InvoicePrintView } from "@/components/InvoicePrintView";
+import { InvoiceShareDialog } from "@/components/InvoiceShareDialog";
 import {
   EmptyState,
   ErrorNote,
@@ -55,6 +59,8 @@ export default function Invoices() {
   const active = params.get("overdue") ? "overdue" : (params.get("status") ?? "");
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
+  const [quickPrintId, setQuickPrintId] = useState<Id<"invoices"> | null>(null);
+  const [quickShareInvoice, setQuickShareInvoice] = useState<any | null>(null);
 
   const { results, status, loadMore, isLoading } = usePaginatedQuery(
     api.invoices.list,
@@ -63,7 +69,7 @@ export default function Invoices() {
       overdue: active === "overdue" ? true : undefined,
       q: query || undefined,
     },
-    { numItems: 25 },
+    { initialNumItems: 25 },
   );
 
   const setFilter = (key: string) => {
@@ -139,6 +145,7 @@ export default function Invoices() {
                   <th className="pb-2 text-right font-medium">Total</th>
                   <th className="pb-2 text-right font-medium">Due amount</th>
                   <th className="pb-2 font-medium">Status</th>
+                  <th className="pb-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/70">
@@ -174,6 +181,43 @@ export default function Invoices() {
                         ) : null}
                       </div>
                     </td>
+                    <td className="py-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:border-brand/60"
+                          onClick={() => setQuickPrintId(invoice._id)}
+                          title="Print or Save PDF"
+                        >
+                          <Printer className="size-3.5 text-brand" />
+                          <span className="hidden md:inline">Print / PDF</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:border-teal-600/60"
+                          onClick={() =>
+                            setQuickShareInvoice({
+                              _id: String(invoice._id),
+                              number: invoice.number,
+                              total: invoice.total,
+                              amountDue: invoice.amountDue,
+                              dueDate: invoice.dueDate,
+                              status: invoice.status,
+                              customerSnapshot: { name: invoice.customerName },
+                            })
+                          }
+                          title="Share Invoice Directly"
+                        >
+                          <Share2 className="size-3.5 text-teal-600" />
+                          <span className="hidden md:inline">Share</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" asChild>
+                          <Link to={`/app/invoices/${invoice._id}`}>View</Link>
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -184,13 +228,77 @@ export default function Invoices() {
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
           <span>{status === "LoadingMore" ? "Loading…" : `${results.length} shown`}</span>
           {status === "CanLoadMore" ? (
-            <Button variant="outline" size="sm" onClick={loadMore}>
+            <Button variant="outline" size="sm" onClick={() => loadMore(25)}>
               Load more
             </Button>
           ) : null}
         </div>
       </SectionCard>
+
+      {quickPrintId && (
+        <InvoiceQuickPrintModal
+          invoiceId={quickPrintId}
+          open={!!quickPrintId}
+          onOpenChange={(open) => !open && setQuickPrintId(null)}
+        />
+      )}
+
+      {quickShareInvoice && (
+        <InvoiceShareDialog
+          invoice={quickShareInvoice}
+          open={!!quickShareInvoice}
+          onOpenChange={(open) => !open && setQuickShareInvoice(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function InvoiceQuickPrintModal({
+  invoiceId,
+  open,
+  onOpenChange,
+}: {
+  invoiceId: Id<"invoices"> | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const detail = useQuery(api.invoices.detail, invoiceId ? { id: invoiceId } : "skip");
+  const [shareOpen, setShareOpen] = useState(false);
+
+  if (!invoiceId) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Tax Invoice Print Preview</DialogTitle>
+          <DialogDescription>Print or export invoice to PDF</DialogDescription>
+        </DialogHeader>
+
+        {!detail ? (
+          <LoadingBlock label="Preparing tax invoice document…" />
+        ) : (
+          <InvoicePrintView
+            invoice={detail.invoice}
+            lines={detail.lines}
+            payments={detail.payments}
+            subscription={detail.subscription}
+            customer={detail.customer}
+            onBack={() => onOpenChange(false)}
+            onShare={() => setShareOpen(true)}
+          />
+        )}
+
+        {detail && (
+          <InvoiceShareDialog
+            open={shareOpen}
+            onOpenChange={setShareOpen}
+            invoice={detail.invoice}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -217,6 +325,8 @@ export function InvoiceDetailPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [showPrintView, setShowPrintView] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -235,6 +345,13 @@ export function InvoiceDetailPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const handlePrint = () => {
+    setShowPrintView(true);
+    setTimeout(() => {
+      window.print();
+    }, 150);
   };
 
   return (
@@ -265,44 +382,76 @@ export function InvoiceDetailPage() {
           </>
         }
         actions={
-          isStaff ? (
-            <>
-              <Button variant="outline" onClick={() => window.print()}>
-                <Printer className="mr-1.5 size-4" /> Print
-              </Button>
-              {detail.canConfirm ? (
-                <Button disabled={busy} onClick={() => run(() => confirm({ id: invoice._id }))}>
-                  <CheckCircle2 className="mr-1.5 size-4" /> Confirm invoice
-                </Button>
-              ) : null}
-              {detail.canPay ? (
-                <Button disabled={busy} onClick={() => setPayOpen(true)}>
-                  <CreditCard className="mr-1.5 size-4" /> Record payment
-                </Button>
-              ) : null}
-              {detail.canCancel ? (
-                <Button
-                  variant="outline"
-                  className="text-rose-600 hover:text-rose-700"
-                  disabled={busy}
-                  onClick={() => run(() => cancel({ id: invoice._id }))}
-                >
-                  <Ban className="mr-1.5 size-4" /> Cancel
-                </Button>
-              ) : null}
-            </>
-          ) : (
-            <Button variant="outline" onClick={() => window.print()}>
-              <Download className="mr-1.5 size-4" /> Download
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setShowPrintView((v) => !v)}
+              className="gap-1.5"
+            >
+              <FileText className="size-4" />
+              {showPrintView ? "Standard View" : "Invoice Document"}
             </Button>
-          )
+            <Button
+              variant="outline"
+              onClick={() => setShareOpen(true)}
+              className="gap-1.5"
+            >
+              <Share2 className="size-4" /> Share
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handlePrint}
+              className="gap-1.5"
+            >
+              <Printer className="size-4" /> Print / PDF
+            </Button>
+            {isStaff ? (
+              <>
+                {detail.canConfirm ? (
+                  <Button disabled={busy} onClick={() => run(() => confirm({ id: invoice._id }))}>
+                    <CheckCircle2 className="mr-1.5 size-4" /> Confirm invoice
+                  </Button>
+                ) : null}
+                {detail.canPay ? (
+                  <Button disabled={busy} onClick={() => setPayOpen(true)}>
+                    <CreditCard className="mr-1.5 size-4" /> Record payment
+                  </Button>
+                ) : null}
+                {detail.canCancel ? (
+                  <Button
+                    variant="outline"
+                    className="text-rose-600 hover:text-rose-700"
+                    disabled={busy}
+                    onClick={() => run(() => cancel({ id: invoice._id }))}
+                  >
+                    <Ban className="mr-1.5 size-4" /> Cancel
+                  </Button>
+                ) : null}
+              </>
+            ) : (
+              <Button variant="outline" onClick={handlePrint}>
+                <Download className="mr-1.5 size-4" /> Download
+              </Button>
+            )}
+          </>
         }
       />
 
       <ErrorNote message={error} />
 
-      <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
-        <SectionCard title="Lines">
+      {showPrintView ? (
+        <InvoicePrintView
+          invoice={invoice}
+          lines={lines}
+          payments={payments}
+          subscription={subscription}
+          customer={customer}
+          onBack={() => setShowPrintView(false)}
+          onShare={() => setShareOpen(true)}
+        />
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
+          <SectionCard title="Lines">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/70 text-left text-xs text-muted-foreground">
@@ -429,6 +578,13 @@ export function InvoiceDetailPage() {
           </SectionCard>
         </div>
       </div>
+      )}
+
+      <InvoiceShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        invoice={invoice}
+      />
 
       <PaymentDialog
         open={payOpen}

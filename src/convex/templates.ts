@@ -4,8 +4,6 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { audit, requireAdmin, requireStaff } from "./lib/authz";
 import { parseOrThrow, templateSchema } from "../shared/validation";
 
-const optional = v.optional(v.string());
-
 const lineValidator = v.object({
   productId: v.id("products"),
   variantId: v.string(),

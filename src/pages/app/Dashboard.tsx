@@ -1,11 +1,13 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/hooks/use-auth";
 import {
   ArrowUpRight,
   BadgeIndianRupee,
   CircleAlert,
   IndianRupee,
+  LogOut,
   Plus,
   RefreshCw,
   TrendingUp,
@@ -52,6 +54,8 @@ function KpiCard({
 }
 
 export default function Dashboard() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const overview = useQuery(api.reports.overview);
   const runs = useQuery(api.billing.recentRuns);
 
@@ -75,6 +79,16 @@ export default function Dashboard() {
               <Link to="/app/subscriptions/new">
                 <Plus className="mr-1.5 size-4" /> New subscription
               </Link>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                signOut();
+                navigate("/admin/login");
+              }}
+              className="gap-1.5 text-muted-foreground hover:text-destructive hover:border-destructive/40"
+            >
+              <LogOut className="size-4" /> Log out
             </Button>
           </>
         }

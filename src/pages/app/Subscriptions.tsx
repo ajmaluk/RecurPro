@@ -24,7 +24,6 @@ import {
 } from "@/components/Bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -66,7 +65,7 @@ export default function Subscriptions() {
   const { results, status: pageStatus, loadMore, isLoading } = usePaginatedQuery(
     api.subscriptions.list,
     { q: query || undefined, status: status || undefined },
-    { numItems: 20 },
+    { initialNumItems: 20 },
   );
 
   return (
@@ -179,7 +178,7 @@ export default function Subscriptions() {
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
           <span>{pageStatus === "LoadingMore" ? "Loading…" : `${results.length} shown`}</span>
           {pageStatus === "CanLoadMore" ? (
-            <Button variant="outline" size="sm" onClick={loadMore}>
+            <Button variant="outline" size="sm" onClick={() => loadMore(20)}>
               Load more
             </Button>
           ) : null}

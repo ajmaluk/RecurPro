@@ -1,8 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { ArrowRight, Eye, EyeOff, Loader2, ShieldQuestion } from "lucide-react";
-import { useAction, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { ArrowRight, Eye, EyeOff, Loader2, ShieldQuestion, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,12 +24,16 @@ function PasswordInput({
   autoComplete,
   disabled,
   required = true,
+  value,
+  onChange,
 }: {
   name: string;
   placeholder: string;
   autoComplete: string;
   disabled: boolean;
   required?: boolean;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -43,6 +45,8 @@ function PasswordInput({
         autoComplete={autoComplete}
         disabled={disabled}
         required={required}
+        value={value}
+        onChange={onChange}
         className="pr-10"
       />
       <button
@@ -58,8 +62,9 @@ function PasswordInput({
   );
 }
 
+import { api as restApi } from "@/lib/api";
+
 function BootstrapCard({ onDone }: { onDone: () => void }) {
-  const seed = useAction(api.seed.seedDemo);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -74,7 +79,7 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
         <CardDescription>
           No accounts exist yet. Create the first admin login and load a realistic
           demo tenant: catalog, plans, taxes, customers, live subscriptions and
-          months of real invoices.
+          months of real invoices in MySQL.
         </CardDescription>
       </CardHeader>
       <form
@@ -84,7 +89,7 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
           setError(null);
           const data = new FormData(event.currentTarget);
           try {
-            await seed({
+            await restApi.auth.seed({
               adminName: String(data.get("name") ?? ""),
               adminEmail: String(data.get("email") ?? ""),
               adminPassword: String(data.get("password") ?? ""),
@@ -105,7 +110,7 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
               <label className="text-sm font-medium" htmlFor="seed-name">
                 Your name
               </label>
-              <Input id="seed-name" name="name" defaultValue="Brightloop Admin" required disabled={busy} />
+              <Input id="seed-name" name="name" defaultValue="RecurPro Admin" required disabled={busy} />
             </div>
             <div className="sm:col-span-2">
               <label className="text-sm font-medium" htmlFor="seed-email">
@@ -115,7 +120,7 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
                 id="seed-email"
                 name="email"
                 type="email"
-                defaultValue="admin@brightloop.in"
+                defaultValue="admin@recurpro.io"
                 required
                 disabled={busy}
               />
@@ -132,8 +137,7 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
               />
               <p className="mt-1.5 text-xs text-muted-foreground">
                 Min 9 characters with an uppercase letter, a lowercase letter and a
-                symbol. Demo customers get the password{" "}
-                <code className="rounded bg-muted px-1">Portal@2026</code>.
+                symbol.
               </p>
             </div>
           </div>
@@ -142,7 +146,7 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
             {done ? "Workspace ready" : "Create admin & seed demo data"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Setup runs once and is disabled as soon as data exists.
+            Setup runs once and initializes your MySQL tables and tenant.
           </p>
         </CardContent>
       </form>
@@ -152,16 +156,47 @@ function BootstrapCard({ onDone }: { onDone: () => void }) {
 
 function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const { isLoading: authLoading, isAuthenticated, user, signIn } = useAuth();
-  const status = useQuery(api.seed.publicStatus);
+  const [status, setStatus] = useState<{ needsBootstrap: boolean } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
-  const redirect = resolveRedirect(returnTo, redirectAfterAuth);
+  const portalParam = searchParams.get("portal") || searchParams.get("role");
+
+  const initialPortalType: "admin" | "customer" =
+    redirectAfterAuth?.startsWith("/portal")
+      ? "customer"
+      : portalParam === "admin" || returnTo?.startsWith("/app")
+        ? "admin"
+        : "customer";
+
+  const [portalType, setPortalType] = useState<"admin" | "customer">(initialPortalType);
+  const redirect = resolveRedirect(
+    returnTo,
+    redirectAfterAuth || (portalType === "admin" ? "/app" : "/portal"),
+  );
+
+  const [emailInput, setEmailInput] = useState(
+    initialPortalType === "admin" ? "admin@recurpro.io" : "arjun@apexlogistics.in"
+  );
+  const [passwordInput, setPasswordInput] = useState("Password123!");
 
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  const handleFill = (email: string, pass: string = "Password123!") => {
+    setEmailInput(email);
+    setPasswordInput(pass);
+    setError(null);
+  };
+
+  useEffect(() => {
+    restApi.auth
+      .status()
+      .then((s) => setStatus(s))
+      .catch(() => setStatus({ needsBootstrap: false }));
+  }, []);
 
   // Send an already-signed-in visitor straight to the right place.
   useEffect(() => {
@@ -170,7 +205,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       ? returnTo
       : user.role === "customer"
         ? "/portal"
-        : redirect;
+        : "/app";
     navigate(target, { replace: true });
   }, [authLoading, isAuthenticated, user, navigate, redirect, returnTo]);
 
@@ -200,7 +235,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
         <div className="pointer-events-none absolute inset-0 hairline-grid opacity-20" />
         <Link to="/" className="relative flex items-center gap-2.5">
           <Logo className="size-7 text-brand" />
-          <span className="text-[15px] font-semibold text-white">Brightloop</span>
+          <span className="text-[15px] font-semibold text-white">RecurPro</span>
         </Link>
         <div className="relative mt-auto max-w-md">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white">
@@ -230,11 +265,48 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
           <div className="mb-6 flex items-center justify-between lg:hidden">
             <Link to="/" className="flex items-center gap-2">
               <Logo className="size-6 text-brand" />
-              <span className="text-sm font-semibold">Brightloop</span>
+              <span className="text-sm font-semibold">RecurPro</span>
             </Link>
             <Link to="/" className="text-sm text-muted-foreground">
               Back
             </Link>
+          </div>
+
+          {/* Portal Type Switcher */}
+          <div className="mb-4 flex rounded-lg border border-border/80 bg-muted/60 p-1 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                setPortalType("admin");
+                setMode("signIn");
+                setEmailInput("admin@recurpro.io");
+                setPasswordInput("Password123!");
+                setError(null);
+              }}
+              className={`flex-1 rounded-md py-2 transition-all ${
+                portalType === "admin"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Staff & Admin Login
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPortalType("customer");
+                setEmailInput("arjun@apexlogistics.in");
+                setPasswordInput("Password123!");
+                setError(null);
+              }}
+              className={`flex-1 rounded-md py-2 transition-all ${
+                portalType === "customer"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Customer Portal
+            </button>
           </div>
 
           {status?.needsBootstrap ? (
@@ -248,12 +320,18 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
             <Card className="card-layer border-0">
               <CardHeader>
                 <CardTitle className="text-xl">
-                  {mode === "signIn" ? "Sign in" : "Create your account"}
+                  {portalType === "admin"
+                    ? "Staff & Admin Login"
+                    : mode === "signIn"
+                      ? "Customer Portal Sign In"
+                      : "Create Customer Account"}
                 </CardTitle>
                 <CardDescription>
-                  {mode === "signIn"
-                    ? "Staff open the back office; customers open their portal."
-                    : "New accounts start as customer portal accounts."}
+                  {portalType === "admin"
+                    ? "Authorized access to back office billing, finance, and system tools."
+                    : mode === "signIn"
+                      ? "View your invoices, subscriptions, and download payment receipts."
+                      : "Register your business to access your customer portal."}
                 </CardDescription>
               </CardHeader>
               <form onSubmit={submit}>
@@ -265,26 +343,39 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     </p>
                   ) : null}
 
-                  <input type="hidden" name="flow" value={mode === "signIn" ? "signIn" : "signUp"} />
+                  <input
+                    type="hidden"
+                    name="flow"
+                    value={portalType === "admin" ? "signIn" : mode}
+                  />
 
-                  {mode === "signUp" ? (
+                  {portalType === "customer" && mode === "signUp" ? (
                     <div>
                       <label className="text-sm font-medium" htmlFor="auth-name">
-                        Name
+                        Company or Contact Name
                       </label>
-                      <Input id="auth-name" name="name" placeholder="Ananya Sharma" autoComplete="name" required disabled={busy} />
+                      <Input
+                        id="auth-name"
+                        name="name"
+                        placeholder="Apex Logistics Ltd"
+                        autoComplete="name"
+                        required
+                        disabled={busy}
+                      />
                     </div>
                   ) : null}
 
                   <div>
                     <label className="text-sm font-medium" htmlFor="auth-email">
-                      Email
+                      {portalType === "admin" ? "Staff Email" : "Account Email"}
                     </label>
                     <Input
                       id="auth-email"
                       name="email"
                       type="email"
-                      placeholder="you@company.in"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      placeholder={portalType === "admin" ? "admin@recurpro.io" : "you@company.in"}
                       autoComplete="email"
                       required
                       disabled={busy}
@@ -296,63 +387,132 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       <label className="text-sm font-medium" htmlFor="auth-password">
                         Password
                       </label>
-                      {mode === "signIn" ? (
-                        <span className="text-xs text-muted-foreground">
-                          Forgot it? Ask an admin to reset it.
-                        </span>
-                      ) : null}
+                      {portalType === "admin" && (
+                        <Link to="/admin/login" className="text-xs text-brand hover:underline">
+                          Dedicated admin portal →
+                        </Link>
+                      )}
                     </div>
                     <PasswordInput
                       name="password"
-                      placeholder={mode === "signIn" ? "Your password" : "9+ chars, Aa, symbol"}
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder={
+                        portalType === "admin"
+                          ? "Enter admin password"
+                          : mode === "signIn"
+                            ? "Your password"
+                            : "9+ chars, Aa, symbol"
+                      }
                       autoComplete={mode === "signIn" ? "current-password" : "new-password"}
                       disabled={busy}
                     />
-                    {mode === "signUp" ? (
-                      <p className="mt-1.5 text-xs text-muted-foreground">
-                        At least 9 characters with an uppercase letter, a lowercase
-                        letter and a symbol.
-                      </p>
-                    ) : null}
                   </div>
 
-                  <Button className="w-full" disabled={busy}>
+                  <Button className="w-full bg-brand text-brand-foreground hover:bg-brand-strong" disabled={busy}>
                     {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-                    {mode === "signIn" ? "Sign in" : "Create account"}
+                    {portalType === "admin"
+                      ? "Sign In to Back Office"
+                      : mode === "signIn"
+                        ? "Sign In to Portal"
+                        : "Create Account"}
                     <ArrowRight className="ml-1 size-4" />
                   </Button>
 
-                  <p className="text-center text-sm text-muted-foreground">
-                    {mode === "signIn" ? (
-                      <>
-                        New here?{" "}
+                  {/* Demo Credentials Box */}
+                  <div className="rounded-lg border border-border/70 bg-muted/30 p-3 text-xs space-y-2">
+                    <div className="flex items-center justify-between font-semibold text-foreground">
+                      <span>{portalType === "admin" ? "Demo Back Office Accounts:" : "Demo Customer Accounts:"}</span>
+                      <span className="text-[11px] text-muted-foreground">Click to fill</span>
+                    </div>
+
+                    {portalType === "admin" ? (
+                      <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          className="font-medium text-brand hover:underline"
-                          onClick={() => {
-                            setMode("signUp");
-                            setError(null);
-                          }}
+                          onClick={() => handleFill("admin@recurpro.io")}
+                          className="flex flex-col items-start rounded border border-border/80 bg-background/80 p-2 text-left hover:border-brand transition-colors"
                         >
-                          Create an account
+                          <span className="font-semibold text-foreground flex items-center gap-1">
+                            <UserCheck className="size-3 text-brand" /> Admin
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">admin@recurpro.io</span>
                         </button>
-                      </>
+                        <button
+                          type="button"
+                          onClick={() => handleFill("staff@recurpro.io")}
+                          className="flex flex-col items-start rounded border border-border/80 bg-background/80 p-2 text-left hover:border-teal-600 transition-colors"
+                        >
+                          <span className="font-semibold text-foreground flex items-center gap-1">
+                            <UserCheck className="size-3 text-teal-600" /> Staff
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">staff@recurpro.io</span>
+                        </button>
+                      </div>
                     ) : (
-                      <>
-                        Already registered?{" "}
+                      <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          className="font-medium text-brand hover:underline"
-                          onClick={() => {
-                            setMode("signIn");
-                            setError(null);
-                          }}
+                          onClick={() => handleFill("arjun@apexlogistics.in")}
+                          className="flex flex-col items-start rounded border border-border/80 bg-background/80 p-2 text-left hover:border-brand transition-colors"
                         >
-                          Sign in
+                          <span className="font-semibold text-foreground flex items-center gap-1">
+                            <UserCheck className="size-3 text-brand" /> Enterprise
+                          </span>
+                          <span className="text-[11px] text-muted-foreground truncate w-full">arjun@apexlogistics.in</span>
                         </button>
-                      </>
+                        <button
+                          type="button"
+                          onClick={() => handleFill("neha@zenithtech.in")}
+                          className="flex flex-col items-start rounded border border-border/80 bg-background/80 p-2 text-left hover:border-brand transition-colors"
+                        >
+                          <span className="font-semibold text-foreground flex items-center gap-1">
+                            <UserCheck className="size-3 text-brand" /> Growth Client
+                          </span>
+                          <span className="text-[11px] text-muted-foreground truncate w-full">neha@zenithtech.in</span>
+                        </button>
+                      </div>
                     )}
-                  </p>
+
+                    <div className="flex justify-between items-center text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                      <span>Password: <strong className="text-foreground">Password123!</strong></span>
+                      <span>Demo ready</span>
+                    </div>
+                  </div>
+
+                  {portalType === "customer" && (
+                    <p className="text-center text-sm text-muted-foreground">
+                      {mode === "signIn" ? (
+                        <>
+                          New here?{" "}
+                          <button
+                            type="button"
+                            className="font-medium text-brand hover:underline"
+                            onClick={() => {
+                              setMode("signUp");
+                              setError(null);
+                            }}
+                          >
+                            Create a customer account
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          Already registered?{" "}
+                          <button
+                            type="button"
+                            className="font-medium text-brand hover:underline"
+                            onClick={() => {
+                              setMode("signIn");
+                              setError(null);
+                            }}
+                          >
+                            Sign in
+                          </button>
+                        </>
+                      )}
+                    </p>
+                  )}
                 </CardContent>
               </form>
             </Card>

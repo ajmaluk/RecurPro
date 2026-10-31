@@ -188,3 +188,27 @@ export function Field({
     </div>
   );
 }
+
+export function StatCard({
+  title,
+  value,
+  hint,
+  icon,
+}: {
+  title: string;
+  value: ReactNode;
+  hint?: ReactNode;
+  icon?: ReactNode;
+}) {
+  return (
+    <div className="card-layer p-5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">{title}</span>
+        {icon ? <span className="text-muted-foreground">{icon}</span> : null}
+      </div>
+      <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</p>
+      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+

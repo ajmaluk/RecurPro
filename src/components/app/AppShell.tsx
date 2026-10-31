@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,37 +75,49 @@ const NAV_GROUPS: { heading: string; items: NavItem[] }[] = [
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
+  const { user } = useAuth();
+  const isAdmin = (user?.role as string) === "admin";
+
   return (
     <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4">
-      {NAV_GROUPS.map((group) => (
-        <div key={group.heading}>
-          <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
-            {group.heading}
-          </p>
-          <ul className="space-y-0.5">
-            {group.items.map((item) => (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  onClick={onNavigate}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-                      isActive
-                        ? "bg-brand/20 text-white shadow-[inset_2px_0_0_0_var(--brand)]"
-                        : "text-white/65 hover:bg-white/5 hover:text-white",
-                    )
-                  }
-                >
-                  <span className="text-brand-strong opacity-90">{item.icon}</span>
-                  {item.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      {NAV_GROUPS.map((group) => {
+        const filteredItems = group.items.filter((item) => {
+          if (item.to === "/app/admin" && !isAdmin) return false;
+          return true;
+        });
+
+        if (filteredItems.length === 0) return null;
+
+        return (
+          <div key={group.heading}>
+            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+              {group.heading}
+            </p>
+            <ul className="space-y-0.5">
+              {filteredItems.map((item) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    end={item.end}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+                        isActive
+                          ? "bg-brand/20 text-white shadow-[inset_2px_0_0_0_var(--brand)]"
+                          : "text-white/65 hover:bg-white/5 hover:text-white",
+                      )
+                    }
+                  >
+                    <span className="text-brand-strong opacity-90">{item.icon}</span>
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
     </nav>
   );
 }
@@ -152,11 +165,17 @@ function UserMenu() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   // Customers belong in the portal; keep them out of the back office.
   if (user && user.role === ROLES.CUSTOMER) {
     return <Navigate to="/portal" replace />;
   }
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/admin/login");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -164,7 +183,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-2 px-5 py-5">
           <Logo className="size-7 text-brand" />
           <div className="leading-tight">
-            <p className="text-sm font-semibold text-white">Brightloop</p>
+            <p className="text-sm font-semibold text-white">RecurPro</p>
             <p className="text-[11px] text-white/50">Back office</p>
           </div>
         </div>
@@ -184,9 +203,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         </button>
         <div className="flex items-center gap-2">
           <Logo className="size-5 text-brand" />
-          <span className="text-sm font-semibold">Brightloop</span>
+          <span className="text-sm font-semibold">RecurPro</span>
         </div>
-        <UserMenu />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="h-8 px-2 text-xs text-muted-foreground hover:text-destructive"
+            title="Log out"
+          >
+            <LogOut className="size-4" />
+          </Button>
+          <UserMenu />
+        </div>
       </header>
 
       <div className="lg:pl-60">
@@ -194,6 +224,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="text-xs text-muted-foreground">
             Recurring billing, quotes and invoicing
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/40"
+          >
+            <LogOut className="size-3.5" /> Log out
+          </Button>
           <UserMenu />
         </div>
         <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -205,7 +243,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SheetContent side="left" className="w-72 border-sidebar-border bg-sidebar p-0">
           <SheetHeader className="flex-row items-center gap-2 border-b border-sidebar-border px-5 py-4">
             <Logo className="size-6 text-brand" />
-            <SheetTitle className="text-white">Brightloop</SheetTitle>
+            <SheetTitle className="text-white">RecurPro</SheetTitle>
             <button
               className="ml-auto text-white/60 hover:text-white"
               onClick={() => setOpen(false)}

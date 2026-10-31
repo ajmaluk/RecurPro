@@ -10,6 +10,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "convex/react": path.resolve(__dirname, "./src/lib/convex-adapter.tsx"),
+      "@convex-dev/auth/react": path.resolve(__dirname, "./src/lib/convex-adapter.tsx"),
     },
     // Force a single copy of React across all packages (including vlyPlugin).
     // Without this, @vly-ai/integrations can resolve its own React copy, which
@@ -26,7 +28,6 @@ export default defineConfig({
         manualChunks: {
           // Vendor chunks for large libraries
           'react-vendor': ['react', 'react-dom', 'react-router'],
-          'convex-vendor': ['convex'],
           // Large UI library chunks
           'radix-ui': [
             '@radix-ui/react-accordion',
@@ -83,7 +84,6 @@ export default defineConfig({
       'react-dom',
       'react-dom/client',
       'react-router',
-      '@convex-dev/auth/react',
       'framer-motion',
       // vlyPlugin() injects this import at serve time, so the dep scanner
       // never sees it. Without it here the first page load discovers it,
@@ -99,6 +99,12 @@ export default defineConfig({
     // Keep HMR on, but disable full-screen error overlay
     hmr: {
       overlay: false,
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
     },
   },
 });

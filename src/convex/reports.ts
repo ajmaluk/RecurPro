@@ -83,6 +83,8 @@ function monthlyEquivalent(price: number, period: Doc<"plans">["billingPeriod"])
       return price;
     case "YEARLY":
       return Math.round(price / 12);
+    default:
+      return price;
   }
 }
 

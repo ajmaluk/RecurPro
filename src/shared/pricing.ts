@@ -323,7 +323,7 @@ export function percentToBps(percent: number): number {
 export function lineRecurring(
   quantity: number,
   unitPrice: number,
-  period: BillingPeriod,
+  _period: BillingPeriod,
 ): number {
   return quantity * unitPrice;
 }

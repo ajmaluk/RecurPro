@@ -1,6 +1,6 @@
 /**
  * State machines — the single source of truth for every status transition in
- * Brightloop. Both the UI (to decide which buttons to show) and the Convex
+ * RecurPro. Both the UI (to decide which buttons to show) and the Convex
  * mutations (to decide whether to accept a transition) import from here.
  *
  * Anything not listed is rejected with a clear error (409 semantics).

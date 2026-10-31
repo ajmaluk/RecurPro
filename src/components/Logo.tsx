@@ -1,4 +1,4 @@
-/** Brightloop mark: an open billing loop with a ledger dot at its centre. */
+/** RecurPro mark: a recurring billing loop with a ledger dot at its centre. */
 export function Logo({ className }: { className?: string }) {
   return (
     <svg

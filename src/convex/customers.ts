@@ -36,7 +36,7 @@ export const list = query({
         .withSearchIndex("search_customers", (s) =>
           s.search("searchText", search).eq("isActive", true),
         )
-        .take(paginationOpts.numItems);
+        .paginate(paginationOpts);
     }
     return await ctx.db
       .query("customers")

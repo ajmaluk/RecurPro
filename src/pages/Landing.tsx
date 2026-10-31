@@ -82,7 +82,7 @@ export default function Landing() {
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2.5">
             <Logo className="size-7 text-brand" />
-            <span className="text-[15px] font-semibold tracking-tight">Brightloop</span>
+            <span className="text-[15px] font-semibold tracking-tight">RecurPro</span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             <a href="#product" className="hover:text-foreground">
@@ -97,11 +97,11 @@ export default function Landing() {
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild>
-              <Link to="/auth">Sign in</Link>
+              <Link to="/portal/login">Customer Portal</Link>
             </Button>
-            <Button asChild>
-              <Link to="/auth">
-                Start free <ArrowRight className="ml-1 size-4" />
+            <Button asChild className="bg-brand text-brand-foreground hover:bg-brand-strong">
+              <Link to="/admin/login">
+                Admin Sign In <ArrowRight className="ml-1 size-4" />
               </Link>
             </Button>
           </div>
@@ -123,19 +123,19 @@ export default function Landing() {
               <span className="text-brand">and never twice.</span>
             </h1>
             <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Brightloop runs your daily, weekly, monthly and yearly billing on a
+              RecurPro runs your daily, weekly, monthly and yearly billing on a
               schedule, turns quotations into subscriptions, applies GST and
               discounts in exact paise, and hands your customers a portal of their
               own.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button size="lg" asChild>
-                <Link to="/auth">
-                  Open the workspace <ArrowRight className="ml-1 size-4" />
+              <Button size="lg" asChild className="bg-brand text-brand-foreground hover:bg-brand-strong">
+                <Link to="/admin/login">
+                  Admin Back Office <ArrowRight className="ml-1 size-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/auth?returnTo=/portal">Customer sign-in</Link>
+                <Link to="/portal/login">Customer Portal Sign In</Link>
               </Button>
             </div>
             <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-border/70 pt-6">
@@ -438,8 +438,8 @@ export default function Landing() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-2">
             <Logo className="size-5 text-brand" />
-            <span className="font-medium text-foreground">Brightloop</span>
-            <span className="text-xs">· subscription management &amp; billing</span>
+            <span className="font-medium text-foreground">RecurPro</span>
+            <span className="text-xs">· recurring subscription management &amp; billing</span>
           </div>
           <div className="flex flex-wrap items-center gap-5 text-xs">
             <span>Money in integer paise</span>
